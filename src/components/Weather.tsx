@@ -18,6 +18,7 @@ function Weather() {
       const res = await fetch(`${API_URL}/api/weather?lat=${lat}&lon=${lon}`);
       const data = await res.json();
       setWeather(data);
+      console.log(data);
     }
     loadWeather();
   }, []);
