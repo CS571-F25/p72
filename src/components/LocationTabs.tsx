@@ -70,6 +70,7 @@ export default function LocationTabs({
               <Input
                 id="lat"
                 type="number"
+                step="any"
                 placeholder="e.g. 40.7128"
                 ref={latRef}
               />
@@ -79,6 +80,7 @@ export default function LocationTabs({
               <Input
                 id="lon"
                 type="number"
+                step="any"
                 placeholder="e.g. -74.0060"
                 ref={lonRef}
               />
