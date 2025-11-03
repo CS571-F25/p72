@@ -180,7 +180,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
               className="w-32 h-32"
             />
             <p className="text-2xl font-bold">
-              {weather.temperature.toFixed(1)}°C
+              {weather.temperature.toFixed(1)}°C |
+              {((weather.temperature * 9) / 5 + 32).toFixed(1)}°F
             </p>
             <p className="text-gray-600">{weather.condition}</p>
           </>
