@@ -39,6 +39,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
         const response = await axios.get(url);
         const data = response.data.data.values;
 
+        console.log(data);
+
         const weatherInfo: WeatherData = {
           temperature: data.temperature,
           condition: getConditionLabel(data.weatherCode),
