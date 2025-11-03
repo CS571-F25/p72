@@ -56,8 +56,6 @@ function Weather() {
       {locations.map((location, i) => {
         return <WeatherCard key={i} location={location.location}></WeatherCard>;
       })}
-
-      <WeatherCard location="Madison, Wisconsin"></WeatherCard>
     </div>
   );
 }
