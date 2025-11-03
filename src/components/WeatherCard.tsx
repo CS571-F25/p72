@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrashIcon } from "@/components/ui/TrashIcon";
 import Lottie from "lottie-react";
+import type { LottieRefCurrentProps } from "lottie-react";
 
 // Import Lottie animations
 import sunAnimation from "@/assets/lottie/sun.json";
@@ -27,72 +30,9 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const lottieRef = useRef<LottieRefCurrentProps>(null);
+
   const API_URL = import.meta.env.VITE_WEATHER_API_BASE_URL;
-
-  useEffect(() => {
-    async function loadWeather() {
-      setLoading(true);
-      setError(null);
-      try {
-        const lat = 43.0755;
-        const lon = 89.4155;
-
-        const url = `${API_URL}/api/weather?lat=${lat}&lon=${lon}`;
-
-        const response = await axios.get(url);
-        const data = response.data.data.values;
-
-        console.log(data);
-
-        const weatherInfo: WeatherData = {
-          temperature: data.temperature,
-          condition: getConditionLabel(data.weatherCode),
-          icon: getConditionIcon(data.weatherCode, data.windSpeed),
-        };
-
-        setWeather(weatherInfo);
-      } catch (err) {
-        setError("Failed to fetch weather data.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadWeather();
-  }, []);
-
-  /*
-
-  useEffect(() => {
-    const fetchWeather = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const apiKey = import.meta.env.VITE_TOMORROW_API_KEY;
-        const url = `https://api.tomorrow.io/v4/weather/realtime?location=${encodeURIComponent(
-          location
-        )}&apikey=${apiKey}`;
-
-        const response = await axios.get(url);
-        const data = response.data.data.values;
-
-        const weatherInfo: WeatherData = {
-          temperature: data.temperature,
-          condition: getConditionLabel(data.weatherCode),
-          icon: getConditionIcon(data.weatherCode),
-        };
-
-        setWeather(weatherInfo);
-      } catch (err) {
-        setError("Failed to fetch weather data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWeather();
-  }, [location]);
-
-  */
 
   const getConditionLabel = (code: number): string => {
     const codes: Record<number, string> = {
@@ -160,37 +100,130 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
     }
   };
 
-  return (
-    <Card className="w-full max-w-sm mx-auto shadow-lg rounded-2xl bg-white/70 backdrop-blur-sm border border-gray-200">
-      <CardHeader>
-        <CardTitle className="text-center text-lg font-semibold">
-          Weather in {location}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center space-y-2 p-4">
-        {loading ? (
-          <p className="text-gray-500 animate-pulse">Loading...</p>
-        ) : error ? (
-          <p className="text-red-500 text-sm">{error}</p>
-        ) : weather ? (
-          <>
-            <Lottie
-              animationData={getAnimation(weather.icon)}
-              loop
-              className="w-32 h-32"
-            />
-            <p className="text-2xl font-bold">
-              {weather.temperature.toFixed(1)}°C |
-              {((weather.temperature * 9) / 5 + 32).toFixed(1)}°F
-            </p>
-            <p className="text-gray-600">{weather.condition}</p>
-          </>
-        ) : (
-          <p className="text-gray-400">No data available.</p>
-        )}
-      </CardContent>
-    </Card>
-  );
+  const handleDelete = () => {};
+
+  if (import.meta.env.DEV) {
+    useEffect(() => {
+      const weatherInfo: WeatherData = {
+        temperature: 16.7,
+        condition: getConditionLabel(1001),
+        icon: getConditionIcon(1001, 41),
+      };
+
+      setWeather(weatherInfo);
+    }, []);
+    return (
+      <Card
+        className="w-full max-w-sm mx-auto shadow-lg rounded-2xl bg-white/70 backdrop-blur-sm border border-gray-200"
+        onMouseEnter={() => {
+          lottieRef.current?.play();
+        }}
+        onMouseLeave={() => {
+          lottieRef.current?.stop();
+        }}
+      >
+        <CardHeader className="flex flex-row place-content-between ">
+          <CardTitle className="text-center text-lg font-semibold">
+            Weather in {location}
+          </CardTitle>
+          <Button variant="destructive" size="icon" onClick={handleDelete}>
+            <TrashIcon className="h-4 w-4"></TrashIcon>
+          </Button>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center space-y-2 p-4">
+          {weather ? (
+            <>
+              <Lottie
+                animationData={getAnimation(weather.icon)}
+                loop
+                autoplay={false}
+                lottieRef={lottieRef}
+                className="w-32 h-32"
+              />
+              <p className="text-2xl font-bold">
+                {weather.temperature.toFixed(1)}°C |{" "}
+                {((weather.temperature * 9) / 5 + 32).toFixed(1)}°F
+              </p>
+              <p className="text-gray-600">{weather.condition}</p>
+            </>
+          ) : (
+            <p className="text-gray-400">No data available.</p>
+          )}
+        </CardContent>
+      </Card>
+    );
+  } else {
+    useEffect(() => {
+      async function loadWeather() {
+        setLoading(true);
+        setError(null);
+        try {
+          // const lat = 43.0755;
+          // const lon = 89.4155;
+
+          const url = `${API_URL}/api/weather?loc=${location}`;
+
+          const response = await axios.get(url);
+          const data = response.data.data.values;
+
+          console.log(data);
+
+          const weatherInfo: WeatherData = {
+            temperature: data.temperature,
+            condition: getConditionLabel(data.weatherCode),
+            icon: getConditionIcon(data.weatherCode, data.windSpeed),
+          };
+
+          setWeather(weatherInfo);
+        } catch (err) {
+          setError("Failed to fetch weather data.");
+        } finally {
+          setLoading(false);
+        }
+      }
+      loadWeather();
+    }, []);
+    return (
+      <Card
+        className="w-full max-w-sm mx-auto shadow-lg rounded-2xl bg-white/70 backdrop-blur-sm border border-gray-200"
+        onMouseEnter={() => lottieRef.current?.play()}
+        onMouseLeave={() => lottieRef.current?.stop()}
+      >
+        <CardHeader>
+          <CardTitle className="text-center text-lg font-semibold">
+            Weather in {location}
+          </CardTitle>
+          <Button variant="destructive" size="icon" onClick={handleDelete}>
+            <TrashIcon className="h-4 w-4"></TrashIcon>
+          </Button>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center space-y-2 p-4">
+          {loading ? (
+            <p className="text-gray-500 animate-pulse">Loading...</p>
+          ) : error ? (
+            <p className="text-red-500 text-sm">{error}</p>
+          ) : weather ? (
+            <>
+              <Lottie
+                animationData={getAnimation(weather.icon)}
+                loop
+                autoplay={false}
+                lottieRef={lottieRef}
+                className="w-32 h-32"
+              />
+              <p className="text-2xl font-bold">
+                {weather.temperature.toFixed(1)}°C |{" "}
+                {((weather.temperature * 9) / 5 + 32).toFixed(1)}°F
+              </p>
+              <p className="text-gray-600">{weather.condition}</p>
+            </>
+          ) : (
+            <p className="text-gray-400">No data available.</p>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 };
 
 export default WeatherCard;
