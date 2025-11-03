@@ -6,7 +6,7 @@ export default function Home() {
     <div>
       <Button> button </Button>
       <h1> Home </h1>
-      <WeatherCard location="New York"></WeatherCard>
+      <WeatherCard location="Madison, Wisconsin"></WeatherCard>
     </div>
   );
 }

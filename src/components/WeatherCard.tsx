@@ -8,6 +8,9 @@ import sunAnimation from "@/assets/lottie/sun.json";
 import cloudAnimation from "@/assets/lottie/cloud.json";
 import rainAnimation from "@/assets/lottie/rain.json";
 import stormAnimation from "@/assets/lottie/storm.json";
+import windAnimation from "@/assets/lottie/wind.json";
+import snowAnimation from "@/assets/lottie/snow.json";
+import rainWindAnimation from "@/assets/lottie/rain-wind.json";
 
 interface WeatherCardProps {
   location: string; // e.g., "Austin,TX"
@@ -31,8 +34,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
       setLoading(true);
       setError(null);
       try {
-        const lat = 40.7128;
-        const lon = -74.006;
+        const lat = 43.0755;
+        const lon = 89.4155;
 
         const url = `${API_URL}/api/weather?lat=${lat}&lon=${lon}`;
 
@@ -44,7 +47,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
         const weatherInfo: WeatherData = {
           temperature: data.temperature,
           condition: getConditionLabel(data.weatherCode),
-          icon: getConditionIcon(data.weatherCode),
+          icon: getConditionIcon(data.weatherCode, data.windSpeed),
         };
 
         setWeather(weatherInfo);
@@ -93,23 +96,48 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
 
   const getConditionLabel = (code: number): string => {
     const codes: Record<number, string> = {
-      1000: "Clear",
+      0: "Unknown",
+      1000: "Clear, Sunny",
       1100: "Mostly Clear",
       1101: "Partly Cloudy",
-      1102: "Cloudy",
+      1102: "Mostly Cloudy",
+      1001: "Cloudy",
+      2000: "Fog",
+      2100: "Light Fog",
       4000: "Drizzle",
+      4001: "Rain",
       4200: "Light Rain",
       4201: "Heavy Rain",
       5000: "Snow",
+      5001: "Flurries",
+      5100: "Light Snow",
+      5101: "Heavy Snow",
+      6000: "Freezing Drizzle",
+      6001: "Freezing Rain",
+      6200: "Light Freezing Rain",
+      6201: "Heavy Freezing Rain",
+      7000: "Ice Pellets",
+      7101: "Heavy Ice Pellets",
+      7102: "Light Ice Pellets",
       8000: "Thunderstorm",
     };
     return codes[code] || "Unknown";
   };
 
-  const getConditionIcon = (code: number): string => {
-    if (code >= 4000 && code < 5000) return "rain";
-    if (code >= 1000 && code < 1103) return "sun";
+  const getConditionIcon = (code: number, windSpeed: number): string => {
+    if (code >= 4000 && code < 5000) {
+      if (windSpeed > 40) {
+        return "rain-wind";
+      } else {
+        return "rain";
+      }
+    }
+    if (code == 1000 || code == 1100) return "sun";
+    if (code >= 5000 && code < 8000) return "snow";
     if (code === 8000) return "storm";
+    if (windSpeed > 40) {
+      return "wind;";
+    }
     return "cloud";
   };
 
@@ -121,6 +149,12 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
         return rainAnimation;
       case "storm":
         return stormAnimation;
+      case "snow":
+        return snowAnimation;
+      case "wind":
+        return windAnimation;
+      case "rain-wind":
+        return rainWindAnimation;
       default:
         return cloudAnimation;
     }
