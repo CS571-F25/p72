@@ -39,7 +39,10 @@ function Weather() {
   const handleSubmit = (data: LocationInput): void => {
     if (locations.length >= 3) {
       setShowWarning(true);
-      return;
+
+      setTimeout(() => {
+        setShowWarning(false);
+      }, 3000);
     }
 
     let newLocation;
