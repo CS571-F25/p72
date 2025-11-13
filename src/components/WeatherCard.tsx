@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrashIcon } from "@/components/ui/TrashIcon";
 import Lottie from "lottie-react";
+import { LocationContext } from "@/contexts/LocationContext";
 import type { LottieRefCurrentProps } from "lottie-react";
 
 // Import Lottie animations
@@ -29,6 +30,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const locations = useContext(LocationContext);
 
   const lottieRef = useRef<LottieRefCurrentProps>(null);
 
@@ -100,7 +102,16 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
     }
   };
 
-  const handleDelete = () => {};
+  const handleDelete = () => {
+    // remove location from localstorage and update context
+    const newLocations = locations?.data.filter((loc) => {
+      return loc.location != location;
+    });
+
+    localStorage.setItem("locations", JSON.stringify(newLocations));
+
+    if (newLocations != undefined) locations?.updateData(newLocations);
+  };
 
   if (import.meta.env.DEV) {
     useEffect(() => {
