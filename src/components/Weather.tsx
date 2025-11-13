@@ -42,7 +42,7 @@ function Weather() {
 
       setTimeout(() => {
         setShowWarning(false);
-      }, 3000);
+      }, 5000);
     }
 
     let newLocation;
