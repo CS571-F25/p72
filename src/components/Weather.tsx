@@ -1,7 +1,7 @@
 import WeatherCard from "@/components/WeatherCard";
 import LocationTabs from "@/components/LocationTabs";
 import { LocationContext } from "@/contexts/LocationContext";
-import { AlertWarn } from "@/components/Alerts";
+import { AlertMaxLocations, AlertAlreadyExists } from "@/components/Alerts";
 import { useState, useEffect } from "react";
 
 interface Location {
@@ -23,7 +23,8 @@ type LocationInput = LocationByName | LocationByCoords;
 
 function Weather() {
   const [locations, setLocations] = useState<Location[]>([]);
-  const [showWarning, setShowWarning] = useState<Boolean>(false);
+  const [showMaxWarning, setShowMaxWarning] = useState<Boolean>(false);
+  const [showExistsWarning, setShowExistsWarning] = useState<Boolean>(false);
 
   useEffect(() => {
     const storedLocations = localStorage.getItem("locations");
@@ -38,11 +39,12 @@ function Weather() {
 
   const handleSubmit = (data: LocationInput): void => {
     if (locations.length >= 3) {
-      setShowWarning(true);
+      setShowMaxWarning(true);
 
       setTimeout(() => {
-        setShowWarning(false);
+        setShowMaxWarning(false);
       }, 5000);
+      return;
     }
 
     let newLocation;
@@ -58,6 +60,11 @@ function Weather() {
       })
     ) {
       // Location already exists TODO: should alert user
+      setShowExistsWarning(true);
+
+      setTimeout(() => {
+        setShowExistsWarning(false);
+      }, 5000);
       return;
     }
 
@@ -72,7 +79,8 @@ function Weather() {
         value={{ data: locations, updateData: setLocations }}
       >
         <LocationTabs onSubmit={handleSubmit}></LocationTabs>
-        {showWarning ? <AlertWarn></AlertWarn> : <></>}
+        {showMaxWarning ? <AlertMaxLocations></AlertMaxLocations> : <></>}
+        {showExistsWarning ? <AlertAlreadyExists></AlertAlreadyExists> : <></>}
         {locations.map((location, i) => {
           return (
             <WeatherCard key={i} location={location.location}></WeatherCard>
