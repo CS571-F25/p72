@@ -26,7 +26,7 @@ export default function AboutMe() {
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <div className="flex-shrink-0">
               <Avatar className="h-28 w-28 rounded-full shadow-lg">
-                <AvatarImage src="./me.jpg" />
+                <AvatarImage src="./samui.jpg" />
                 <AvatarFallback>AL</AvatarFallback>
               </Avatar>
             </div>
