@@ -2,6 +2,7 @@ import { createContext } from "react";
 
 interface Location {
   location: string;
+  name: string;
 }
 
 interface LocationContext {

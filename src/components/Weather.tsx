@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 
 interface Location {
   location: string;
+  name: string;
 }
 
 type LocationByName = {
@@ -83,7 +84,11 @@ function Weather() {
         {showExistsWarning ? <AlertAlreadyExists></AlertAlreadyExists> : <></>}
         {locations.map((location, i) => {
           return (
-            <WeatherCard key={i} location={location.location}></WeatherCard>
+            <WeatherCard
+              key={i}
+              location={location.location}
+              name={location.name}
+            ></WeatherCard>
           );
         })}
       </LocationContext.Provider>

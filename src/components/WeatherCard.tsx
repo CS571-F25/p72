@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { TrashIcon } from "@/components/ui/TrashIcon";
 import Lottie from "lottie-react";
 import { LocationContext } from "@/contexts/LocationContext";
@@ -18,6 +19,7 @@ import rainWindAnimation from "@/assets/lottie/rain-wind.json";
 
 interface WeatherCardProps {
   location: string; // e.g., "Austin,TX"
+  name: string;
 }
 
 interface WeatherData {
@@ -26,13 +28,15 @@ interface WeatherData {
   icon: string;
 }
 
-const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
+const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const locations = useContext(LocationContext);
 
   const lottieRef = useRef<LottieRefCurrentProps>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [customName, setCustomName] = useState(name);
 
   const API_URL = import.meta.env.VITE_WEATHER_API_BASE_URL;
 
@@ -113,6 +117,26 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
     if (newLocations != undefined) locations?.updateData(newLocations);
   };
 
+  const handleSaveName = () => {
+    setEditingName(false);
+    // Update the location in the context with the new custom name
+    if (locations) {
+      const updatedLocations = locations.data.map((loc) => {
+        if (loc.location === location) {
+          return { ...loc, name: customName };
+        }
+        return loc;
+      });
+      localStorage.setItem("locations", JSON.stringify(updatedLocations));
+      locations.updateData(updatedLocations);
+    }
+  };
+
+  const handleCancelName = () => {
+    setCustomName(name);
+    setEditingName(false);
+  };
+
   if (import.meta.env.DEV) {
     useEffect(() => {
       const weatherInfo: WeatherData = {
@@ -134,12 +158,48 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
         }}
       >
         <CardHeader className="flex flex-row place-content-between ">
-          <CardTitle className="text-center text-lg font-semibold">
-            Weather in {location}
-          </CardTitle>
-          <Button variant="destructive" size="icon" onClick={handleDelete}>
-            <TrashIcon className="h-4 w-4"></TrashIcon>
-          </Button>
+          {editingName ? (
+            <div className="flex gap-2 flex-1">
+              <Input
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="Enter custom name"
+                className="flex-1"
+              />
+              <Button size="sm" onClick={handleSaveName}>
+                Save
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleCancelName}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <>
+              <CardTitle
+                className="text-center text-lg font-semibold cursor-pointer hover:text-primary transition-colors flex items-center justify-center gap-2 group"
+                onClick={() => setEditingName(true)}
+              >
+                Weather in {customName ? customName : location}
+                <svg
+                  className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+              </CardTitle>
+              <Button variant="destructive" size="icon" onClick={handleDelete}>
+                <TrashIcon className="h-4 w-4"></TrashIcon>
+              </Button>
+            </>
+          )}
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center space-y-2 p-4">
           {weather ? (
@@ -177,8 +237,6 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
           const response = await axios.get(url);
           const data = response.data.data.values;
 
-          console.log(data);
-
           const weatherInfo: WeatherData = {
             temperature: data.temperature,
             condition: getConditionLabel(data.weatherCode),
@@ -201,12 +259,48 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location }) => {
         onMouseLeave={() => lottieRef.current?.stop()}
       >
         <CardHeader>
-          <CardTitle className="text-center text-lg font-semibold">
-            Weather in {location}
-          </CardTitle>
-          <Button variant="destructive" size="icon" onClick={handleDelete}>
-            <TrashIcon className="h-4 w-4"></TrashIcon>
-          </Button>
+          {editingName ? (
+            <div className="flex gap-2 flex-1">
+              <Input
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="Enter custom name"
+                className="flex-1"
+              />
+              <Button size="sm" onClick={handleSaveName}>
+                Save
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleCancelName}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <>
+              <CardTitle
+                className="text-center text-lg font-semibold cursor-pointer hover:text-primary transition-colors flex items-center justify-center gap-2 group"
+                onClick={() => setEditingName(true)}
+              >
+                Weather in {customName ? customName : location}
+                <svg
+                  className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+              </CardTitle>
+              <Button variant="destructive" size="icon" onClick={handleDelete}>
+                <TrashIcon className="h-4 w-4"></TrashIcon>
+              </Button>
+            </>
+          )}
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center space-y-2 p-4">
           {loading ? (
