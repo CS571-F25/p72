@@ -75,22 +75,41 @@ function Weather() {
   };
 
   return (
-    <div>
+    <div className="min-h-screen px-6 py-8">
       <LocationContext.Provider
         value={{ data: locations, updateData: setLocations }}
       >
-        <LocationTabs onSubmit={handleSubmit}></LocationTabs>
-        {showMaxWarning ? <AlertMaxLocations></AlertMaxLocations> : <></>}
-        {showExistsWarning ? <AlertAlreadyExists></AlertAlreadyExists> : <></>}
-        {locations.map((location, i) => {
-          return (
-            <WeatherCard
-              key={i}
-              location={location.location}
-              name={location.name}
-            ></WeatherCard>
-          );
-        })}
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-2">Your Locations</h2>
+            <p className="text-sm text-muted-foreground">
+              Add up to 3 locations to track their weather
+            </p>
+          </div>
+
+          <div className="mb-12">
+            <LocationTabs onSubmit={handleSubmit}></LocationTabs>
+          </div>
+
+          {showMaxWarning ? <AlertMaxLocations></AlertMaxLocations> : <></>}
+          {showExistsWarning ? (
+            <AlertAlreadyExists></AlertAlreadyExists>
+          ) : (
+            <></>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {locations.map((location, i) => {
+              return (
+                <WeatherCard
+                  key={i}
+                  location={location.location}
+                  name={location.name}
+                ></WeatherCard>
+              );
+            })}
+          </div>
+        </div>
       </LocationContext.Provider>
     </div>
   );

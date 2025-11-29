@@ -26,6 +26,11 @@ interface WeatherData {
   temperature: number;
   condition: string;
   icon: string;
+  windSpeed?: number;
+  humidity?: number;
+  feelsLike?: number;
+  visibility?: number;
+  pressure?: number;
 }
 
 const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
@@ -37,6 +42,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
   const lottieRef = useRef<LottieRefCurrentProps>(null);
   const [editingName, setEditingName] = useState(false);
   const [customName, setCustomName] = useState(name);
+  const [expanded, setExpanded] = useState(false);
 
   const API_URL = import.meta.env.VITE_WEATHER_API_BASE_URL;
 
@@ -143,13 +149,18 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
         temperature: 16.7,
         condition: getConditionLabel(1001),
         icon: getConditionIcon(1001, 41),
+        windSpeed: 12.5,
+        humidity: 65,
+        feelsLike: 15.2,
+        visibility: 10000,
+        pressure: 1013.25,
       };
 
       setWeather(weatherInfo);
     }, []);
     return (
       <Card
-        className="w-full max-w-sm mx-auto shadow-lg rounded-2xl bg-white/70 backdrop-blur-sm border border-gray-200"
+        className="w-full h-full shadow-lg rounded-2xl bg-gradient-to-br from-white/80 to-white/60 dark:from-[#0b1220]/80 dark:to-[#0b1220]/60 backdrop-blur-md border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-xl transition-shadow"
         onMouseEnter={() => {
           lottieRef.current?.play();
         }}
@@ -157,7 +168,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
           lottieRef.current?.stop();
         }}
       >
-        <CardHeader className="flex flex-row place-content-between ">
+        <CardHeader className="flex flex-row place-content-between pb-3 border-b border-gray-200 dark:border-gray-700">
           {editingName ? (
             <div className="flex gap-2 flex-1">
               <Input
@@ -201,7 +212,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
             </>
           )}
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center space-y-2 p-4">
+        <CardContent className="flex flex-col items-center justify-center space-y-4 p-6 text-center">
           {weather ? (
             <>
               <Lottie
@@ -211,16 +222,99 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
                 lottieRef={lottieRef}
                 className="w-32 h-32"
               />
-              <p className="text-2xl font-bold">
-                {weather.temperature.toFixed(1)}°C |{" "}
+              <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-500">
+                {weather.temperature.toFixed(1)}°C
+              </p>
+              <p className="text-sm text-muted-foreground">
                 {((weather.temperature * 9) / 5 + 32).toFixed(1)}°F
               </p>
-              <p className="text-gray-600">{weather.condition}</p>
+              <p className="text-base text-gray-600 dark:text-gray-400 font-medium">
+                {weather.condition}
+              </p>
             </>
           ) : (
             <p className="text-gray-400">No data available.</p>
           )}
         </CardContent>
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="w-full px-6 py-3 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+          >
+            <span className="text-sm font-medium">
+              {expanded ? "Hide Details" : "Show Details"}
+            </span>
+            <svg
+              className={`w-4 h-4 transition-transform ${
+                expanded ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+              />
+            </svg>
+          </button>
+          {expanded && weather && (
+            <div className="px-6 py-4 bg-black/2 dark:bg-white/5 space-y-3 border-t border-gray-200 dark:border-gray-700">
+              {weather.feelsLike !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Feels Like
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {weather.feelsLike.toFixed(1)}°C
+                  </span>
+                </div>
+              )}
+              {weather.humidity !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Humidity
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {weather.humidity}%
+                  </span>
+                </div>
+              )}
+              {weather.windSpeed !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Wind Speed
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {weather.windSpeed.toFixed(1)} m/s
+                  </span>
+                </div>
+              )}
+              {weather.visibility !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Visibility
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {(weather.visibility / 1000).toFixed(1)} km
+                  </span>
+                </div>
+              )}
+              {weather.pressure !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Pressure
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {weather.pressure.toFixed(0)} hPa
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </Card>
     );
   } else {
@@ -241,6 +335,11 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
             temperature: data.temperature,
             condition: getConditionLabel(data.weatherCode),
             icon: getConditionIcon(data.weatherCode, data.windSpeed),
+            windSpeed: data.windSpeed,
+            humidity: data.humidity,
+            feelsLike: data.feelsLike,
+            visibility: data.visibility,
+            pressure: data.pressureSurfaceLevel,
           };
 
           setWeather(weatherInfo);
@@ -254,7 +353,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
     }, []);
     return (
       <Card
-        className="w-full max-w-sm mx-auto shadow-lg rounded-2xl bg-white/70 backdrop-blur-sm border border-gray-200"
+        className="w-full h-full shadow-lg rounded-2xl bg-gradient-to-br from-white/80 to-white/60 dark:from-[#0b1220]/80 dark:to-[#0b1220]/60 backdrop-blur-md border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-xl transition-shadow"
         onMouseEnter={() => lottieRef.current?.play()}
         onMouseLeave={() => lottieRef.current?.stop()}
       >
@@ -302,7 +401,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
             </>
           )}
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center space-y-2 p-4">
+        <CardContent className="flex flex-col items-center justify-center space-y-4 p-6 text-center">
           {loading ? (
             <p className="text-gray-500 animate-pulse">Loading...</p>
           ) : error ? (
@@ -316,16 +415,99 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
                 lottieRef={lottieRef}
                 className="w-32 h-32"
               />
-              <p className="text-2xl font-bold">
-                {weather.temperature.toFixed(1)}°C |{" "}
+              <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-500">
+                {weather.temperature.toFixed(1)}°C
+              </p>
+              <p className="text-sm text-muted-foreground">
                 {((weather.temperature * 9) / 5 + 32).toFixed(1)}°F
               </p>
-              <p className="text-gray-600">{weather.condition}</p>
+              <p className="text-base text-gray-600 dark:text-gray-400 font-medium">
+                {weather.condition}
+              </p>
             </>
           ) : (
             <p className="text-gray-400">No data available.</p>
           )}
         </CardContent>
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="w-full px-6 py-3 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+          >
+            <span className="text-sm font-medium">
+              {expanded ? "Hide Details" : "Show Details"}
+            </span>
+            <svg
+              className={`w-4 h-4 transition-transform ${
+                expanded ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+              />
+            </svg>
+          </button>
+          {expanded && weather && (
+            <div className="px-6 py-4 bg-black/2 dark:bg-white/5 space-y-3 border-t border-gray-200 dark:border-gray-700">
+              {weather.feelsLike !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Feels Like
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {weather.feelsLike.toFixed(1)}°C
+                  </span>
+                </div>
+              )}
+              {weather.humidity !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Humidity
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {weather.humidity}%
+                  </span>
+                </div>
+              )}
+              {weather.windSpeed !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Wind Speed
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {weather.windSpeed.toFixed(1)} m/s
+                  </span>
+                </div>
+              )}
+              {weather.visibility !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Visibility
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {(weather.visibility / 1000).toFixed(1)} km
+                  </span>
+                </div>
+              )}
+              {weather.pressure !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Pressure
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {weather.pressure.toFixed(0)} hPa
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </Card>
     );
   }
