@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useRef } from "react";
+import UseMyLocationButton from "@/components/UseMyLocationButton";
 
 export default function LocationTabs({
   onSubmit,
@@ -53,12 +54,17 @@ export default function LocationTabs({
                 className="mt-2 h-11 rounded-full"
               />
             </div>
-            <Button
-              type="submit"
-              className="w-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white h-11 shadow-lg"
-            >
-              Add Location
-            </Button>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                type="submit"
+                className="w-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white h-11 shadow-lg"
+              >
+                Add Location
+              </Button>
+
+              <UseMyLocationButton onSubmit={onSubmit} />
+            </div>
           </form>
         </TabsContent>
 

@@ -1,4 +1,5 @@
 import WeatherCard from "@/components/WeatherCard";
+import WeatherCardDev from "@/components/WeatherCardDev";
 import LocationTabs from "@/components/LocationTabs";
 import { LocationContext } from "@/contexts/LocationContext";
 import { AlertMaxLocations, AlertAlreadyExists } from "@/components/Alerts";
@@ -100,12 +101,21 @@ function Weather() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {locations.map((location, i) => {
+              if (import.meta.env.DEV) {
+                return (
+                  <WeatherCardDev
+                    key={i}
+                    location={location.location}
+                    name={location.name}
+                  />
+                );
+              }
               return (
                 <WeatherCard
                   key={i}
                   location={location.location}
                   name={location.name}
-                ></WeatherCard>
+                />
               );
             })}
           </div>
