@@ -6,6 +6,8 @@ import { TrashIcon } from "@/components/ui/TrashIcon";
 import Lottie from "lottie-react";
 import { LocationContext } from "@/contexts/LocationContext";
 import type { LottieRefCurrentProps } from "lottie-react";
+import Tooltip from "@/components/ui/Tooltip";
+import { InfoIcon } from "@/components/ui/InfoIcon";
 
 import sunAnimation from "@/assets/lottie/sun.json";
 import cloudAnimation from "@/assets/lottie/cloud.json";
@@ -41,6 +43,19 @@ const degreesToCardinal = (deg: number) => {
   ];
   const index = Math.round((deg % 360) / 22.5) % 16;
   return directions[index];
+};
+
+const detailDescriptions: Record<string, string> = {
+  feelsLike: "Perceived temperature accounting for wind and humidity.",
+  dewPoint: "Temperature at which air becomes saturated and dew forms.",
+  humidity: "Relative humidity as a percentage of water vapor in air.",
+  precipProb: "Chance of precipitation occurring during the period.",
+  wind: "Wind speed and gusts measured in meters per second.",
+  windDir: "Wind direction shown as compass and degrees.",
+  visibility: "Horizontal visibility distance (meters or kilometers).",
+  cloudCover: "Percentage of sky covered by clouds.",
+  pressure: "Atmospheric pressure at sea/surface level in hPa.",
+  altimeter: "Altimeter setting used by aircraft pilots (hPa).",
 };
 
 const getAnimation = (icon: string) => {
@@ -258,9 +273,14 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
             <div className="grid grid-cols-2 gap-3">
               {mock.feelsLike !== undefined && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    Feels Like
-                  </span>
+                  <Tooltip content={detailDescriptions.feelsLike}>
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Feels Like
+                      </span>
+                      <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                    </>
+                  </Tooltip>
                   <span className="text-sm font-semibold">
                     {mock.feelsLike.toFixed(1)}°C
                   </span>
@@ -269,9 +289,14 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
 
               {mock.dewPoint !== undefined && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    Dew Point
-                  </span>
+                  <Tooltip content={detailDescriptions.dewPoint}>
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Dew Point
+                      </span>
+                      <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                    </>
+                  </Tooltip>
                   <span className="text-sm font-semibold">
                     {mock.dewPoint.toFixed(1)}°C
                   </span>
@@ -280,9 +305,14 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
 
               {mock.humidity !== undefined && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    Humidity
-                  </span>
+                  <Tooltip content={detailDescriptions.humidity}>
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Humidity
+                      </span>
+                      <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                    </>
+                  </Tooltip>
                   <span className="text-sm font-semibold">
                     {mock.humidity}%
                   </span>
@@ -291,9 +321,14 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
 
               {mock.precipitationProbability !== undefined && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    Precip. Prob.
-                  </span>
+                  <Tooltip content={detailDescriptions.precipProb}>
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Precip. Prob.
+                      </span>
+                      <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                    </>
+                  </Tooltip>
                   <span className="text-sm font-semibold">
                     {Math.round(mock.precipitationProbability)}%
                   </span>
@@ -303,7 +338,14 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
               {(mock.windSpeed !== undefined ||
                 mock.windGust !== undefined) && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">Wind</span>
+                  <Tooltip content={detailDescriptions.wind}>
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Wind
+                      </span>
+                      <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                    </>
+                  </Tooltip>
                   <span className="text-sm font-semibold">
                     {mock.windSpeed !== undefined
                       ? `${mock.windSpeed.toFixed(1)} m/s`
@@ -317,9 +359,14 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
 
               {mock.windDirection !== undefined && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    Wind Dir.
-                  </span>
+                  <Tooltip content={detailDescriptions.windDir}>
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Wind Dir.
+                      </span>
+                      <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                    </>
+                  </Tooltip>
                   <span className="text-sm font-semibold">
                     {degreesToCardinal(mock.windDirection)} (
                     {Math.round(mock.windDirection)}°)
@@ -329,9 +376,14 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
 
               {mock.visibility !== undefined && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    Visibility
-                  </span>
+                  <Tooltip content={detailDescriptions.visibility}>
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Visibility
+                      </span>
+                      <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                    </>
+                  </Tooltip>
                   <span className="text-sm font-semibold">
                     {mock.visibility > 1000
                       ? `${(mock.visibility / 1000).toFixed(1)} km`
@@ -342,9 +394,14 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
 
               {mock.cloudCover !== undefined && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    Cloud Cover
-                  </span>
+                  <Tooltip content={detailDescriptions.cloudCover}>
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Cloud Cover
+                      </span>
+                      <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                    </>
+                  </Tooltip>
                   <span className="text-sm font-semibold">
                     {Math.round(mock.cloudCover)}%
                   </span>
@@ -354,9 +411,14 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
               {(mock.pressureSeaLevel ?? mock.pressureSurfaceLevel) !==
                 undefined && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    Pressure
-                  </span>
+                  <Tooltip content={detailDescriptions.pressure}>
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Pressure
+                      </span>
+                      <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                    </>
+                  </Tooltip>
                   <span className="text-sm font-semibold">
                     {(mock.pressureSeaLevel ??
                       mock.pressureSurfaceLevel)!.toFixed(0)}{" "}
@@ -367,9 +429,14 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
 
               {mock.altimeterSetting !== undefined && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    Altimeter
-                  </span>
+                  <Tooltip content={detailDescriptions.altimeter}>
+                    <>
+                      <span className="text-xs text-muted-foreground">
+                        Altimeter
+                      </span>
+                      <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                    </>
+                  </Tooltip>
                   <span className="text-sm font-semibold">
                     {mock.altimeterSetting.toFixed(2)} hPa
                   </span>

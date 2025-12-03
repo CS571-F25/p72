@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { TrashIcon } from "@/components/ui/TrashIcon";
 import Lottie from "lottie-react";
+import Tooltip from "@/components/ui/Tooltip";
+import { InfoIcon } from "@/components/ui/InfoIcon";
 import { LocationContext } from "@/contexts/LocationContext";
 import type { LottieRefCurrentProps } from "lottie-react";
 
@@ -160,6 +162,19 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
     ];
     const index = Math.round((deg % 360) / 22.5) % 16;
     return directions[index];
+  };
+
+  const detailDescriptions: Record<string, string> = {
+    feelsLike: "Perceived temperature accounting for wind and humidity.",
+    dewPoint: "Temperature at which air becomes saturated and dew forms.",
+    humidity: "Relative humidity as a percentage of water vapor in air.",
+    precipProb: "Chance of precipitation occurring during the period.",
+    wind: "Wind speed and gusts measured in meters per second.",
+    windDir: "Wind direction shown as compass and degrees.",
+    visibility: "Horizontal visibility distance (meters or kilometers).",
+    cloudCover: "Percentage of sky covered by clouds.",
+    pressure: "Atmospheric pressure at sea/surface level in hPa.",
+    altimeter: "Altimeter setting used by aircraft pilots (hPa).",
   };
 
   const handleDelete = () => {
@@ -373,9 +388,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
                 <>
                   {weather.feelsLike !== undefined && (
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        Feels Like
-                      </span>
+                      <Tooltip content={detailDescriptions.feelsLike}>
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            Feels Like
+                          </span>
+                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                        </>
+                      </Tooltip>
                       <span className="text-sm font-semibold">
                         {weather.feelsLike.toFixed(1)}°C
                       </span>
@@ -384,9 +404,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
 
                   {weather.dewPoint !== undefined && (
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        Dew Point
-                      </span>
+                      <Tooltip content={detailDescriptions.dewPoint}>
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            Dew Point
+                          </span>
+                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                        </>
+                      </Tooltip>
                       <span className="text-sm font-semibold">
                         {weather.dewPoint.toFixed(1)}°C
                       </span>
@@ -395,9 +420,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
 
                   {weather.humidity !== undefined && (
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        Humidity
-                      </span>
+                      <Tooltip content={detailDescriptions.humidity}>
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            Humidity
+                          </span>
+                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                        </>
+                      </Tooltip>
                       <span className="text-sm font-semibold">
                         {weather.humidity}%
                       </span>
@@ -406,9 +436,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
 
                   {weather.precipitationProbability !== undefined && (
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        Precip. Prob.
-                      </span>
+                      <Tooltip content={detailDescriptions.precipProb}>
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            Precip. Prob.
+                          </span>
+                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                        </>
+                      </Tooltip>
                       <span className="text-sm font-semibold">
                         {Math.round(weather.precipitationProbability)}%
                       </span>
@@ -418,9 +453,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
                   {(weather.windSpeed !== undefined ||
                     weather.windGust !== undefined) && (
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        Wind
-                      </span>
+                      <Tooltip content={detailDescriptions.wind}>
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            Wind
+                          </span>
+                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                        </>
+                      </Tooltip>
                       <span className="text-sm font-semibold">
                         {weather.windSpeed !== undefined
                           ? `${weather.windSpeed.toFixed(1)} m/s`
@@ -434,9 +474,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
 
                   {weather.windDirection !== undefined && (
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        Wind Dir.
-                      </span>
+                      <Tooltip content={detailDescriptions.windDir}>
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            Wind Dir.
+                          </span>
+                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                        </>
+                      </Tooltip>
                       <span className="text-sm font-semibold">
                         {degreesToCardinal(weather.windDirection)} (
                         {Math.round(weather.windDirection)}°)
@@ -446,9 +491,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
 
                   {weather.visibility !== undefined && (
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        Visibility
-                      </span>
+                      <Tooltip content={detailDescriptions.visibility}>
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            Visibility
+                          </span>
+                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                        </>
+                      </Tooltip>
                       <span className="text-sm font-semibold">
                         {weather.visibility > 1000
                           ? `${(weather.visibility / 1000).toFixed(1)} km`
@@ -459,9 +509,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
 
                   {weather.cloudCover !== undefined && (
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        Cloud Cover
-                      </span>
+                      <Tooltip content={detailDescriptions.cloudCover}>
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            Cloud Cover
+                          </span>
+                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                        </>
+                      </Tooltip>
                       <span className="text-sm font-semibold">
                         {Math.round(weather.cloudCover)}%
                       </span>
@@ -471,9 +526,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
                   {(weather.pressureSeaLevel ??
                     weather.pressureSurfaceLevel) !== undefined && (
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        Pressure
-                      </span>
+                      <Tooltip content={detailDescriptions.pressure}>
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            Pressure
+                          </span>
+                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                        </>
+                      </Tooltip>
                       <span className="text-sm font-semibold">
                         {(weather.pressureSeaLevel ??
                           weather.pressureSurfaceLevel)!.toFixed(0)}{" "}
@@ -484,9 +544,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
 
                   {weather.altimeterSetting !== undefined && (
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        Altimeter
-                      </span>
+                      <Tooltip content={detailDescriptions.altimeter}>
+                        <>
+                          <span className="text-xs text-muted-foreground">
+                            Altimeter
+                          </span>
+                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
+                        </>
+                      </Tooltip>
                       <span className="text-sm font-semibold">
                         {weather.altimeterSetting.toFixed(2)} hPa
                       </span>

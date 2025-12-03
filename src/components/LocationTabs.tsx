@@ -51,7 +51,7 @@ export default function LocationTabs({
                 id="name"
                 placeholder="e.g. New York City"
                 ref={nameRef}
-                className="mt-2 h-11 rounded-full"
+                className="mt-2 h-10 rounded-lg"
               />
             </div>
 
@@ -115,12 +115,15 @@ export default function LocationTabs({
                 />
               </div>
             </div>
-            <Button
-              type="submit"
-              className="w-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white h-11 shadow-lg"
-            >
-              Add Location
-            </Button>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                type="submit"
+                className="w-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white h-11 shadow-lg"
+              >
+                Add Location
+              </Button>
+              <UseMyLocationButton onSubmit={onSubmit} />
+            </div>
           </form>
         </TabsContent>
       </Tabs>
