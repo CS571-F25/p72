@@ -131,3 +131,34 @@ export function createOverlayMarker(
     return null as any;
   }
 }
+
+// Helper: prefer formatted_address, then plus code, then assemble locality
+export function getLabelFromGeocode(res: any): string | null {
+  const first = res?.results?.[0];
+  const formatted =
+    first?.formatted_address ?? res?.results?.[0]?.formatted_address;
+  if (formatted) return formatted;
+  const plus =
+    first?.plus_code?.compound_code ??
+    res?.plus_code?.compound_code ??
+    res?.plus_code?.global_code;
+  if (plus) {
+    return plus;
+  }
+  const comps = first?.address_components;
+  if (comps && Array.isArray(comps)) {
+    const locality = comps.find(
+      (c: any) =>
+        c.types.includes("locality") || c.types.includes("postal_town")
+    )?.long_name;
+    const region = comps.find((c: any) =>
+      c.types.includes("administrative_area_level_1")
+    )?.long_name;
+    const country = comps.find((c: any) =>
+      c.types.includes("country")
+    )?.long_name;
+    const parts = [locality, region, country].filter(Boolean);
+    if (parts.length) return parts.join(", ");
+  }
+  return null;
+}

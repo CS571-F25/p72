@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GoogleMap, useJsApiLoader } from "@react-google-maps/api";
 import axios from "axios";
-import { buildProxyEndpoint, createOverlayMarker } from "../lib/mapHelpers";
+import {
+  buildProxyEndpoint,
+  createOverlayMarker,
+  getLabelFromGeocode,
+} from "../lib/mapHelpers";
 export type Pick = { type: "coords"; lat: number; lon: number; name?: string };
 
 const LIBRARIES = ["places"] as const;
@@ -47,7 +51,6 @@ export default function GoogleMapPicker({
   const [showPredictions, setShowPredictions] = useState(false);
 
   const mapRef = useRef<google.maps.Map | null>(null);
-  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   // refs for newer APIs / fallbacks
   const inputRef = useRef<HTMLInputElement | null>(null);
   const placeAutocompleteRef = useRef<any>(null);
@@ -59,7 +62,6 @@ export default function GoogleMapPicker({
 
   const onLoadMap = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
-    geocoderRef.current = new google.maps.Geocoder();
     // detect advanced marker availability
     advancedAvailableRef.current = !!(
       (google as any).maps?.marker &&
@@ -73,46 +75,17 @@ export default function GoogleMapPicker({
     mapRef.current = null;
   }, []);
 
-  // Helper: prefer formatted_address, then plus code, then assemble locality
-  function getLabelFromGeocode(res: any): string | null {
-    const first = res?.results?.[0];
-    const formatted =
-      first?.formatted_address ?? res?.results?.[0]?.formatted_address;
-    if (formatted) return formatted;
-    const plus =
-      first?.plus_code?.compound_code ??
-      res?.plus_code?.compound_code ??
-      res?.plus_code?.global_code;
-    if (plus) {
-      return plus;
-    }
-    const comps = first?.address_components;
-    if (comps && Array.isArray(comps)) {
-      const locality = comps.find(
-        (c: any) =>
-          c.types.includes("locality") || c.types.includes("postal_town")
-      )?.long_name;
-      const region = comps.find((c: any) =>
-        c.types.includes("administrative_area_level_1")
-      )?.long_name;
-      const country = comps.find((c: any) =>
-        c.types.includes("country")
-      )?.long_name;
-      const parts = [locality, region, country].filter(Boolean);
-      if (parts.length) return parts.join(", ");
-    }
-    return null;
-  }
-
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
-    if (!geocoderRef.current) return null;
     setIsFetching(true);
     setGeoError(null);
     try {
-      const res = (await geocoderRef.current.geocode({
-        location: { lat, lng },
-      })) as any;
-      const label = getLabelFromGeocode(res);
+      const endpoint = buildProxyEndpoint("reverse", {
+        lat: String(lat),
+        lng: String(lng),
+      });
+      const r = await axios.get(endpoint);
+      const body = r.data;
+      const label = getLabelFromGeocode(body);
       setPlaceLabel(label);
       return label;
     } catch (err) {
@@ -275,24 +248,33 @@ export default function GoogleMapPicker({
               // fallback: if we have a place_id, geocode it
               const pid =
                 payload?.place_id || (place && place.place_id) || null;
-              if (pid && geocoderRef.current) {
+              if (pid) {
                 setIsFetching(true);
-                const res = (await geocoderRef.current.geocode({
-                  placeId: pid,
-                })) as any;
-                const first = res?.results?.[0];
-                const loc = first?.geometry?.location;
-                if (loc) {
-                  const lat = round4(loc.lat());
-                  const lng = round4(loc.lng());
-                  setMarker({ lat, lng });
-                  setPlaceLabel(
-                    getLabelFromGeocode(res) ?? inputRef.current?.value ?? null
-                  );
-                  mapRef.current?.panTo({ lat, lng });
-                  mapRef.current?.setZoom(8);
+                try {
+                  const endpoint = buildProxyEndpoint("geocode", {
+                    place_id: pid,
+                  });
+                  const r = await axios.get(endpoint);
+                  const body = r.data;
+                  const first = body?.results?.[0];
+                  const loc = first?.geometry?.location;
+                  if (loc) {
+                    const lat = round4(loc.lat);
+                    const lng = round4(loc.lng);
+                    setMarker({ lat, lng });
+                    setPlaceLabel(
+                      getLabelFromGeocode(body) ??
+                        inputRef.current?.value ??
+                        null
+                    );
+                    mapRef.current?.panTo({ lat, lng });
+                    mapRef.current?.setZoom(8);
+                  }
+                } catch (e) {
+                  // ignore and let predictions fallback handle it
+                } finally {
+                  setIsFetching(false);
                 }
-                setIsFetching(false);
               }
             } catch (e) {
               // ignore and let fallback flow handle predictions
