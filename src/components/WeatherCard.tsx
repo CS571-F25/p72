@@ -393,6 +393,10 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
             setExpanded(next);
             if (next) setLoadHourly(true);
           }}
+          onMouseEnter={() => {
+            // warm HourlyForecast chunk so Suspense fallback is rarely visible
+            import("@/components/HourlyForecast");
+          }}
           aria-expanded={expanded}
           aria-controls={detailsId}
           className="w-full px-6 py-3 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"

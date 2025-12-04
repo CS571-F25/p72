@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import axios from "axios";
 
 type Interval = {
@@ -16,29 +16,32 @@ export default function HourlyForecast({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [intervals, setIntervals] = useState<Interval[]>([]);
+  const intervalsRef = useRef<Interval[]>([]);
+  intervalsRef.current = intervals;
 
   const unitSymbol = "°F";
   const timezone = "UTC";
 
   useEffect(() => {
-    const fetchHourly = async () => {
+    const controller = new AbortController();
+
+    // Only show the loading UI if we have no data yet.
+    if (intervalsRef.current.length === 0) {
       setLoading(true);
-      setError(null);
+    }
+    setError(null);
+
+    (async () => {
       try {
         const BASE = import.meta.env.VITE_WEATHER_API_BASE_URL || "";
-
-        const params = new URLSearchParams({
-          location: `${lat},${lon}`,
-        });
-
+        const params = new URLSearchParams({ location: `${lat},${lon}` });
         const endpoint = BASE
           ? `${BASE}/api/weather-forecast?${params.toString()}`
           : `/api/weather-forecast?${params.toString()}`;
 
-        const res = await axios.get(endpoint);
+        const res = await axios.get(endpoint, { signal: controller.signal });
         const body = res.data;
 
-        // Tomorrow.io timeline shape
         const found: Interval[] | undefined =
           body?.data?.timelines?.[0]?.intervals ||
           body?.timelines?.[0]?.intervals ||
@@ -49,16 +52,26 @@ export default function HourlyForecast({
           throw new Error("No hourly data returned");
         }
 
+        // replace intervals only after a successful fetch
         setIntervals(found.slice(0, 24));
       } catch (err: any) {
+        if (
+          err?.name === "CanceledError" ||
+          err?.name === "AbortError" ||
+          err?.code === "ERR_CANCELED" ||
+          axios.isCancel?.(err)
+        ) {
+          return;
+        }
         setError(err?.message || String(err));
       } finally {
+        // always clear loading flag (if we were showing it)
         setLoading(false);
       }
-    };
+    })();
 
-    fetchHourly();
-  }, []);
+    return () => controller.abort();
+  }, [lat, lon]);
 
   const rows = useMemo(
     () =>
@@ -66,7 +79,6 @@ export default function HourlyForecast({
         const t = new Date(iv.startTime);
         const rawTemp =
           iv.values?.temperature ?? iv.values?.temperatureApparent ?? null;
-        // Backend returns Fahrenheit already; use raw value and round.
         const temp = rawTemp == null ? null : Math.round(rawTemp);
         const pop =
           iv.values?.precipitationProbability ??
@@ -78,7 +90,7 @@ export default function HourlyForecast({
     [intervals]
   );
 
-  // Only show the loading placeholder when we have no data to display yet
+  // Only show the loading placeholder when there's no data to display yet.
   if (loading && intervals.length === 0)
     return (
       <div className="py-2">
