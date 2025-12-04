@@ -75,6 +75,10 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
   );
 
   const HourlyForecast = lazy(() => import("@/components/HourlyForecast"));
+  const parts = (location || "").split(",").map((s) => s.trim());
+  const latN = Number(parts[0]);
+  const lonN = Number(parts[1]);
+  const valid = !Number.isNaN(latN) && !Number.isNaN(lonN);
 
   useEffect(() => {
     // Measure details content whenever the details region is opened or
@@ -604,28 +608,13 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                 </>
               )}
             </div>
-            {/* Lazy-load hourly forecast when user opens details */}
-            {loadHourly &&
-              (() => {
-                // parse location string expected as "lat,lon"
-                const parts = (location || "").split(",").map((s) => s.trim());
-                const latN = Number(parts[0]);
-                const lonN = Number(parts[1]);
-                const valid = !Number.isNaN(latN) && !Number.isNaN(lonN);
-                return valid ? (
-                  <Suspense
-                    fallback={
-                      <div className="py-2">Loading hourly forecast…</div>
-                    }
-                  >
-                    <HourlyForecast lat={latN} lon={lonN} />
-                  </Suspense>
-                ) : (
-                  <div className="py-2 text-sm text-red-500">
-                    Invalid coordinates
-                  </div>
-                );
-              })()}
+            {valid && loadHourly && (
+              <Suspense
+                fallback={<div className="py-2">Loading hourly forecast…</div>}
+              >
+                <HourlyForecast lat={latN} lon={lonN} />
+              </Suspense>
+            )}
           </div>
         </div>
       </div>
