@@ -63,7 +63,7 @@ export default function HourlyForecast({
     return () => {
       mounted = false;
     };
-  }, [lat, lon, location]);
+  }, [lat, lon]);
 
   const rows = useMemo(
     () =>
