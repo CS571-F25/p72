@@ -21,8 +21,6 @@ export default function HourlyForecast({
   const timezone = "UTC";
 
   useEffect(() => {
-    let mounted = true;
-
     const fetchHourly = async () => {
       setLoading(true);
       setError(null);
@@ -51,19 +49,16 @@ export default function HourlyForecast({
           throw new Error("No hourly data returned");
         }
 
-        if (mounted) setIntervals(found.slice(0, 24));
+        setIntervals(found.slice(0, 24));
       } catch (err: any) {
-        if (mounted) setError(err?.message || String(err));
+        setError(err?.message || String(err));
       } finally {
-        if (mounted) setLoading(false);
+        setLoading(false);
       }
     };
 
     fetchHourly();
-    return () => {
-      mounted = false;
-    };
-  }, [lat, lon]);
+  }, []);
 
   const rows = useMemo(
     () =>
