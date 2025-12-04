@@ -51,6 +51,8 @@ interface WeatherData {
   altimeterSetting?: number;
 }
 
+const HourlyForecast = lazy(() => import("@/components/HourlyForecast"));
+
 const WeatherCard: React.FC<WeatherCardProps> = ({
   location,
   name,
@@ -74,7 +76,6 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
     [location]
   );
 
-  const HourlyForecast = lazy(() => import("@/components/HourlyForecast"));
   const parts = (location || "").split(",").map((s) => s.trim());
   const latN = Number(parts[0]);
   const lonN = Number(parts[1]);
