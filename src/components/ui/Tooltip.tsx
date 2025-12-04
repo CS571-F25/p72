@@ -62,6 +62,7 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, className }) => {
             }
           : { position: "fixed", left: -9999, top: -9999 }
       }
+      aria-hidden={!visible}
     >
       {content}
     </span>
@@ -83,7 +84,9 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, className }) => {
         {children}
       </span>
 
-      {visible ? createPortal(tooltipNode, document.body) : null}
+      {typeof document !== "undefined"
+        ? createPortal(tooltipNode, document.body)
+        : null}
     </span>
   );
 };

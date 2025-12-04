@@ -4,6 +4,7 @@ import React, {
   useState,
   useRef,
   useContext,
+  useMemo,
 } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,10 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
   const detailsWrapperRef = useRef<HTMLDivElement | null>(null);
   const detailsContentRef = useRef<HTMLDivElement | null>(null);
   const [detailsMaxHeight, setDetailsMaxHeight] = useState(0);
+  const detailsId = useMemo(
+    () => `details-${(location || "").replace(/[^a-z0-9_-]+/gi, "-")}`,
+    [location]
+  );
 
   useLayoutEffect(() => {
     function updateHeight() {
@@ -317,6 +322,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                 onClick={handleDelete}
                 className="flex-shrink-0"
               >
+                <span className="sr-only">Delete Card</span>{" "}
+                {/* Text for screen readers */}
                 <TrashIcon className="h-4 w-4"></TrashIcon>
               </Button>
             )}
@@ -356,6 +363,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
       <div className="border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          aria-controls={detailsId}
           className="w-full px-6 py-3 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
         >
           <span className="text-sm font-medium">
@@ -379,6 +388,9 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
         </button>
         <div
           ref={detailsWrapperRef}
+          id={detailsId}
+          role="region"
+          aria-label={`Details for ${customName ? customName : location}`}
           style={{
             maxHeight: expanded ? `${detailsMaxHeight}px` : "0px",
             overflow: "hidden",
