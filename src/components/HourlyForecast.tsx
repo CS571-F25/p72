@@ -83,7 +83,8 @@ export default function HourlyForecast({
     [intervals]
   );
 
-  if (loading)
+  // Only show the loading placeholder when we have no data to display yet
+  if (loading && intervals.length === 0)
     return (
       <div className="py-2">
         <div className="text-sm text-muted-foreground">Hourly (24h)</div>
@@ -91,7 +92,8 @@ export default function HourlyForecast({
       </div>
     );
 
-  if (error)
+  // Show error only if there's no data to show
+  if (error && intervals.length === 0)
     return (
       <div className="py-2 text-sm text-red-500">
         Error loading forecast: {error}
