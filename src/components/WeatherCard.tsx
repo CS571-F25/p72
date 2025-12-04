@@ -5,6 +5,7 @@ import React, {
   useContext,
   useMemo,
   lazy,
+  Suspense,
 } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
   const [editingName, setEditingName] = useState(false);
   const [customName, setCustomName] = useState(name || "");
   const [expanded, setExpanded] = useState(false);
+  const [loadHourly, setLoadHourly] = useState(false);
   const detailsWrapperRef = useRef<HTMLDivElement | null>(null);
   const detailsContentRef = useRef<HTMLDivElement | null>(null);
   const [detailsMaxHeight, setDetailsMaxHeight] = useState(0);
@@ -105,7 +107,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
       if (ro) ro.disconnect();
       else window.removeEventListener("resize", update);
     };
-  }, [expanded]);
+  }, [expanded, loadHourly]);
 
   const API_URL = import.meta.env.VITE_WEATHER_API_BASE_URL;
 
@@ -389,6 +391,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
           onClick={() => {
             const next = !expanded;
             setExpanded(next);
+            if (next) setLoadHourly(true);
           }}
           aria-expanded={expanded}
           aria-controls={detailsId}
@@ -605,7 +608,13 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                 </>
               )}
             </div>
-            {valid && <HourlyForecast lat={latN} lon={lonN} />}
+            {valid && loadHourly && (
+              <Suspense
+                fallback={<div className="py-2">Loading hourly forecast…</div>}
+              >
+                <HourlyForecast lat={latN} lon={lonN} />
+              </Suspense>
+            )}
           </div>
         </div>
       </div>
