@@ -1,6 +1,5 @@
 import React, {
   useEffect,
-  useLayoutEffect,
   useState,
   useRef,
   useContext,
@@ -77,16 +76,34 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
 
   const HourlyForecast = lazy(() => import("@/components/HourlyForecast"));
 
-  useLayoutEffect(() => {
-    function updateHeight() {
-      const content = detailsContentRef.current;
-      if (content) setDetailsMaxHeight(content.scrollHeight);
+  useEffect(() => {
+    // Measure details content whenever the details region is opened or
+    // when the hourly content is loaded. Use ResizeObserver when available
+    // to react to internal content changes (e.g. lazy-loaded children).
+    const content = detailsContentRef.current;
+    if (!content) return;
+
+    const update = () => {
+      const c = detailsContentRef.current;
+      if (c) setDetailsMaxHeight(c.scrollHeight);
+    };
+
+    // measure now if expanded
+    if (expanded) update();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof (window as any).ResizeObserver !== "undefined") {
+      ro = new (window as any).ResizeObserver(() => update());
+      ro?.observe(content);
+    } else {
+      window.addEventListener("resize", update);
     }
 
-    updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
-  }, [weather]);
+    return () => {
+      if (ro) ro.disconnect();
+      else window.removeEventListener("resize", update);
+    };
+  }, [expanded, loadHourly]);
 
   const API_URL = import.meta.env.VITE_WEATHER_API_BASE_URL;
 
