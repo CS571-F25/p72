@@ -19,6 +19,7 @@ type LocationByCoords = {
   type: "coords";
   lat: number;
   lon: number;
+  name?: string;
 };
 
 type LocationInput = LocationByName | LocationByCoords;
@@ -51,9 +52,13 @@ function Weather() {
 
     let newLocation;
     if (data.type == "name") {
-      newLocation = { location: data.name } as Location;
+      newLocation = { location: data.name, name: data.name } as Location;
     } else {
-      newLocation = { location: `${data.lat},${data.lon}` } as Location;
+      const coordsStr = `${data.lat},${data.lon}`;
+      newLocation = {
+        location: coordsStr,
+        name: (data as LocationByCoords).name ?? coordsStr,
+      } as Location;
     }
 
     if (
@@ -61,7 +66,7 @@ function Weather() {
         return loc.location == newLocation.location;
       })
     ) {
-      // Location already exists TODO: should alert user
+      // Location already exists should alert user
       setShowExistsWarning(true);
 
       setTimeout(() => {

@@ -28,6 +28,7 @@ import rainWindAnimation from "@/assets/lottie/rain-wind.json";
 interface WeatherCardProps {
   location: string; // e.g., "Austin,TX"
   name: string;
+  disableDelete?: boolean;
 }
 
 interface WeatherData {
@@ -48,7 +49,11 @@ interface WeatherData {
   altimeterSetting?: number;
 }
 
-const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
+const WeatherCard: React.FC<WeatherCardProps> = ({
+  location,
+  name,
+  disableDelete = false,
+}) => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -190,8 +195,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
 
   const handleSaveName = () => {
     setEditingName(false);
-    // Ensure name is trimmed and max 20 chars
-    const trimmedName = customName.trim().slice(0, 20);
+    const trimmedName = customName.trim().slice(0, 100);
     // Update the location in the context with the new custom name
     if (locations) {
       const updatedLocations = locations.data.map((loc) => {
@@ -306,14 +310,16 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ location, name }) => {
                 />
               </svg>
             </CardTitle>
-            <Button
-              variant="destructive"
-              size="icon"
-              onClick={handleDelete}
-              className="flex-shrink-0"
-            >
-              <TrashIcon className="h-4 w-4"></TrashIcon>
-            </Button>
+            {!disableDelete && (
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={handleDelete}
+                className="flex-shrink-0"
+              >
+                <TrashIcon className="h-4 w-4"></TrashIcon>
+              </Button>
+            )}
           </>
         )}
       </CardHeader>

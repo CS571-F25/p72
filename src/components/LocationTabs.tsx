@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useRef } from "react";
 import UseMyLocationButton from "@/components/UseMyLocationButton";
+import React from "react";
+
+const GoogleMapPicker = React.lazy(() => import("./GoogleMapPicker"));
 
 export default function LocationTabs({
   onSubmit,
 }: {
   onSubmit: (data: any) => void;
 }) {
-  const nameRef = useRef<HTMLInputElement>(null);
   const latRef = useRef<HTMLInputElement>(null);
   const lonRef = useRef<HTMLInputElement>(null);
 
@@ -27,47 +29,25 @@ export default function LocationTabs({
 
   return (
     <div className="bg-white/60 dark:bg-[#0b1220]/60 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-      <Tabs defaultValue="name" className="w-full">
+      <Tabs defaultValue="map" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="name">By Name</TabsTrigger>
+          <TabsTrigger value="map">Map</TabsTrigger>
           <TabsTrigger value="coords">By Coordinates</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="name">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!nameRef.current?.value.trim()) return;
-              onSubmit({ type: "name", name: nameRef.current.value.trim() });
-              nameRef.current.value = "";
-            }}
-            className="space-y-4 mt-4"
-          >
-            <div>
-              <Label htmlFor="name" className="text-sm font-medium">
-                Location Name
-              </Label>
-              <Input
-                id="name"
-                placeholder="e.g. New York City"
-                ref={nameRef}
-                className="mt-2 h-10 rounded-lg"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                type="submit"
-                className="w-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white h-11 shadow-lg"
-              >
-                Add Location
-              </Button>
-
-              <UseMyLocationButton onSubmit={onSubmit} />
-            </div>
-          </form>
+        <TabsContent value="map">
+          <div className="mt-4">
+            <React.Suspense
+              fallback={
+                <div className="h-80 flex items-center justify-center">
+                  Loading map…
+                </div>
+              }
+            >
+              <GoogleMapPicker onPick={onSubmit} />
+            </React.Suspense>
+          </div>
         </TabsContent>
-
         <TabsContent value="coords">
           <form
             onSubmit={(e) => {

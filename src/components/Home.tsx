@@ -1,113 +1,151 @@
-// import {
-//   Card,
-//   CardHeader,
-//   CardTitle,
-//   CardDescription,
-//   CardContent,
-//   CardFooter,
-// } from "@/components/ui/card";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Lottie from "lottie-react";
+import cloudAnimation from "@/assets/lottie/cloud.json";
+import sunAnimation from "@/assets/lottie/sun.json";
+import rainAnimation from "@/assets/lottie/rain.json";
+import stormAnimation from "@/assets/lottie/storm.json";
+import windAnimation from "@/assets/lottie/wind.json";
+import snowAnimation from "@/assets/lottie/snow.json";
+import rainWindAnimation from "@/assets/lottie/rain-wind.json";
+import { Button } from "@/components/ui/button";
+import UseMyLocationButton from "@/components/UseMyLocationButton";
+import WeatherCard from "@/components/WeatherCard";
 
 export default function Home() {
+  const navigate = useNavigate();
+  const [previewLocation, setPreviewLocation] = useState<string | null>(null);
+
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
+  const carouselAnimations = [
+    sunAnimation,
+    cloudAnimation,
+    rainAnimation,
+    rainWindAnimation,
+    stormAnimation,
+    snowAnimation,
+    windAnimation,
+  ];
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCarouselIndex((i) => (i + 1) % carouselAnimations.length);
+    }, 2500);
+    return () => clearInterval(id);
+  }, []);
+
+  const handlePreview = (data: any) => {
+    if (data?.type === "coords") {
+      const lat = Math.round(data.lat * 10000) / 10000;
+      const lon = Math.round(data.lon * 10000) / 10000;
+      setPreviewLocation(`${lat},${lon}`);
+    }
+  };
+
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-6 py-12 ">
-      <div className="w-full max-w-4xl">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-sky-400 via-indigo-500 to-rose-400 bg-clip-text text-transparent">
-            So... how's the weather?
-          </h1>
-          <p className="text-sm text-muted-foreground mt-3">
-            Get a quick forecast for any city — or use your current location.
-          </p>
-        </header>
-        {/* 
-        <Card className="backdrop-blur-sm bg-white/60 dark:bg-[#0b1220]/60 p-6 sm:p-8">
-          <CardHeader className="px-0">
-            <CardTitle className="text-lg">Find Weather</CardTitle>
-            <CardDescription>
-              Search by city name, postal code, or try your location.
-            </CardDescription>
-          </CardHeader>
+    <div className="relative min-h-[70vh] flex items-center justify-center px-6 py-12">
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div
+          style={{
+            position: "absolute",
+            right: "-10%",
+            top: "-10%",
+            width: "60%",
+            height: "60%",
+            background:
+              "radial-gradient(ellipse at top right, rgba(99,102,241,0.06), rgba(236,72,153,0.03))",
+            filter: "blur(48px)",
+            opacity: 0.9,
+          }}
+        />
+      </div>
 
-          <CardContent className="px-0">
-            <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6 items-center">
-              <div className="flex items-center justify-center">
-                <svg
-                  width="140"
-                  height="100"
-                  viewBox="0 0 140 100"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden
-                >
-                  <defs>
-                    <linearGradient id="g1" x1="0" x2="1">
-                      <stop offset="0" stopColor="#60A5FA" />
-                      <stop offset="1" stopColor="#A78BFA" />
-                    </linearGradient>
-                  </defs>
-                  <g transform="translate(10,10)">
-                    <circle
-                      cx="30"
-                      cy="20"
-                      r="16"
-                      fill="url(#g1)"
-                      opacity="0.95"
-                    />
-                    <path
-                      d="M10 50c0-11 9-20 20-20h40c11 0 20 9 20 20s-9 20-20 20H30c-11 0-20-9-20-20z"
-                      fill="#F8FAFC"
-                      stroke="#E6EEF8"
-                    />
-                    <path
-                      d="M70 18c6-6 16-6 22 0"
-                      stroke="#FDE68A"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      opacity="0.9"
-                    />
-                  </g>
-                </svg>
+      <div className="w-full max-w-6xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="text-center md:text-left">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-3 bg-gradient-to-r from-sky-400 via-indigo-500 to-rose-400 bg-clip-text text-transparent">
+              So... how's the weather?
+            </h1>
+            <p className="text-lg text-muted-foreground mb-6">
+              Get a quick forecast for any city — or use your current location.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
+              <Button
+                onClick={() => navigate("/weather")}
+                className="h-11 rounded-full px-6 bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-lg transform transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:translate-y-0 min-w-[160px]"
+              >
+                Check the Weather
+              </Button>
+
+              <div className="mt-4 sm:mt-0 sm:ml-4 w-full max-w-xs">
+                <UseMyLocationButton onSubmit={handlePreview} />
               </div>
+            </div>
 
-              <form className="flex flex-col gap-4 md:gap-0 md:flex-row md:items-center md:justify-between">
-                <Input
-                  aria-label="Search location"
-                  placeholder="e.g. Seattle, WA"
-                  className="h-12 rounded-full px-4 shadow-sm"
-                />
+            <div className="mt-6">
+              {previewLocation ? (
+                <div className="max-w-sm mx-auto md:mx-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-muted-foreground">Preview</div>
+                    <button
+                      onClick={() => setPreviewLocation(null)}
+                      className="text-xs text-muted-foreground hover:text-red-500"
+                    >
+                      Clear
+                    </button>
+                  </div>
 
-                <div className="flex gap-3 md:ml-4">
-                  <Button
-                    className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-lg"
-                    type="submit"
-                  >
-                    Search
-                  </Button>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    className="rounded-full"
-                  >
-                    Use my location
-                  </Button>
+                  <WeatherCard
+                    location={previewLocation}
+                    name={"Your location"}
+                    disableDelete={true}
+                  />
                 </div>
-              </form>
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  No preview — click “Use my location” to see a quick card.
+                </div>
+              )}
             </div>
-          </CardContent>
+          </div>
 
-          <CardFooter className="px-0">
-            <div className="flex items-center justify-between w-full">
-              <div className="text-sm text-muted-foreground">
-                Tip: save up to 3 favorite locations in the Weather tab.
-              </div>
-              <div className="text-xs text-muted-foreground hidden sm:block">
-                Fast · Private · Accurate
-              </div>
+          <div className="flex items-center justify-center">
+            <div className="w-64 h-64">
+              <Lottie
+                animationData={JSON.parse(JSON.stringify(cloudAnimation))}
+                loop
+                autoplay
+                className="w-full h-full"
+              />
             </div>
-          </CardFooter>
-        </Card> */}
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-center gap-6">
+              {carouselAnimations.map((anim, i) => (
+                <div
+                  key={i}
+                  className={`w-20 h-20 transition-transform duration-500 ease-out ${
+                    i === carouselIndex
+                      ? "scale-110 opacity-100"
+                      : "scale-90 opacity-40"
+                  }`}
+                >
+                  <Lottie
+                    animationData={JSON.parse(JSON.stringify(anim))}
+                    loop
+                    autoplay
+                    className="w-full h-full"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
