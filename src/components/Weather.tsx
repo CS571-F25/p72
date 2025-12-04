@@ -10,10 +10,10 @@ interface Location {
   name: string;
 }
 
-type LocationByName = {
-  type: "name";
-  name: string;
-};
+// type LocationByName = {
+//   type: "name";
+//   name: string;
+// };
 
 type LocationByCoords = {
   type: "coords";
@@ -22,7 +22,7 @@ type LocationByCoords = {
   name?: string;
 };
 
-type LocationInput = LocationByName | LocationByCoords;
+type LocationInput = LocationByCoords;
 
 function Weather() {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -51,15 +51,15 @@ function Weather() {
     }
 
     let newLocation;
-    if (data.type == "name") {
-      newLocation = { location: data.name, name: data.name } as Location;
-    } else {
-      const coordsStr = `${data.lat},${data.lon}`;
-      newLocation = {
-        location: coordsStr,
-        name: (data as LocationByCoords).name ?? coordsStr,
-      } as Location;
-    }
+    // if (data.type == "name") {
+    //   newLocation = { location: data.name, name: data.name } as Location;
+    // } else {
+    const coordsStr = `${data.lat},${data.lon}`;
+    newLocation = {
+      location: coordsStr,
+      name: (data as LocationByCoords).name ?? coordsStr,
+    } as Location;
+    //}
 
     if (
       locations.some((loc) => {

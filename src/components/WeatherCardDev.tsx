@@ -157,6 +157,96 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
     altimeterSetting: 1026.28,
   };
 
+  // Mock timeline response (Tomorrow.io-like) — reduced to the intervals we'll render
+  const mockTimeline = {
+    data: {
+      timelines: [
+        {
+          timestep: "1h",
+          startTime: "2025-12-04T18:00:00Z",
+          endTime: "2025-12-06T18:00:00Z",
+          intervals: [
+            {
+              startTime: "2025-12-04T18:00:00Z",
+              values: { temperature: 11.7 },
+            },
+            {
+              startTime: "2025-12-04T19:00:00Z",
+              values: { temperature: 13.7 },
+            },
+            { startTime: "2025-12-04T20:00:00Z", values: { temperature: 15 } },
+            {
+              startTime: "2025-12-04T21:00:00Z",
+              values: { temperature: 15.4 },
+            },
+            {
+              startTime: "2025-12-04T22:00:00Z",
+              values: { temperature: 15.2 },
+            },
+            {
+              startTime: "2025-12-04T23:00:00Z",
+              values: { temperature: 12.9 },
+            },
+            { startTime: "2025-12-05T00:00:00Z", values: { temperature: 11 } },
+            { startTime: "2025-12-05T01:00:00Z", values: { temperature: 10 } },
+            { startTime: "2025-12-05T02:00:00Z", values: { temperature: 9.9 } },
+            { startTime: "2025-12-05T03:00:00Z", values: { temperature: 9.8 } },
+            { startTime: "2025-12-05T04:00:00Z", values: { temperature: 10 } },
+            {
+              startTime: "2025-12-05T05:00:00Z",
+              values: { temperature: 12.1 },
+            },
+            {
+              startTime: "2025-12-05T06:00:00Z",
+              values: { temperature: 12.8 },
+            },
+            {
+              startTime: "2025-12-05T07:00:00Z",
+              values: { temperature: 12.5 },
+            },
+            {
+              startTime: "2025-12-05T08:00:00Z",
+              values: { temperature: 12.6 },
+            },
+            { startTime: "2025-12-05T09:00:00Z", values: { temperature: 12 } },
+            {
+              startTime: "2025-12-05T10:00:00Z",
+              values: { temperature: 12.2 },
+            },
+            {
+              startTime: "2025-12-05T11:00:00Z",
+              values: { temperature: 14.5 },
+            },
+            {
+              startTime: "2025-12-05T12:00:00Z",
+              values: { temperature: 15.5 },
+            },
+            {
+              startTime: "2025-12-05T13:00:00Z",
+              values: { temperature: 16.4 },
+            },
+            {
+              startTime: "2025-12-05T14:00:00Z",
+              values: { temperature: 17.3 },
+            },
+            {
+              startTime: "2025-12-05T15:00:00Z",
+              values: { temperature: 18.8 },
+            },
+            {
+              startTime: "2025-12-05T16:00:00Z",
+              values: { temperature: 20.9 },
+            },
+            {
+              startTime: "2025-12-05T17:00:00Z",
+              values: { temperature: 22.8 },
+            },
+          ],
+        },
+      ],
+    },
+  };
+
   return (
     <Card
       className="w-full self-start shadow-lg rounded-2xl bg-gradient-to-br from-white/80 to-white/60 dark:from-[#0b1220]/80 dark:to-[#0b1220]/60 backdrop-blur-md border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-xl transition-shadow"
@@ -460,6 +550,31 @@ const WeatherCardDev: React.FC<WeatherCardDevProps> = ({ location, name }) => {
                   </span>
                 </div>
               )}
+              {/* Dev-only hourly mock preview */}
+              <div className="col-span-2">
+                <div className="text-sm text-muted-foreground mb-2">
+                  Hourly (mock)
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {mockTimeline.data.timelines[0].intervals.map((iv, idx) => {
+                    const t = new Date(iv.startTime);
+                    const temp = iv.values?.temperature;
+                    return (
+                      <div
+                        key={idx}
+                        className="flex-none w-20 p-2 rounded-lg bg-gray-50 dark:bg-slate-800 text-center"
+                      >
+                        <div className="text-xs text-muted-foreground">
+                          {t.toLocaleTimeString([], { hour: "numeric" })}
+                        </div>
+                        <div className="text-sm font-medium mt-1">
+                          {temp == null ? "—" : `${Math.round(temp)}°C`}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>

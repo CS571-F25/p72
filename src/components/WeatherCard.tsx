@@ -5,6 +5,8 @@ import React, {
   useRef,
   useContext,
   useMemo,
+  lazy,
+  Suspense,
 } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -64,6 +66,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
   const [editingName, setEditingName] = useState(false);
   const [customName, setCustomName] = useState(name || "");
   const [expanded, setExpanded] = useState(false);
+  const [loadHourly, setLoadHourly] = useState(false);
   const detailsWrapperRef = useRef<HTMLDivElement | null>(null);
   const detailsContentRef = useRef<HTMLDivElement | null>(null);
   const [detailsMaxHeight, setDetailsMaxHeight] = useState(0);
@@ -71,6 +74,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
     () => `details-${(location || "").replace(/[^a-z0-9_-]+/gi, "-")}`,
     [location]
   );
+
+  const HourlyForecast = lazy(() => import("@/components/HourlyForecast"));
 
   useLayoutEffect(() => {
     function updateHeight() {
@@ -362,7 +367,11 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
       </CardContent>
       <div className="border-t border-gray-200 dark:border-gray-700">
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => {
+            const next = !expanded;
+            setExpanded(next);
+            if (next) setLoadHourly(true);
+          }}
           aria-expanded={expanded}
           aria-controls={detailsId}
           className="w-full px-6 py-3 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
@@ -578,6 +587,28 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                 </>
               )}
             </div>
+            {/* Lazy-load hourly forecast when user opens details */}
+            {loadHourly &&
+              (() => {
+                // parse location string expected as "lat,lon"
+                const parts = (location || "").split(",").map((s) => s.trim());
+                const latN = Number(parts[0]);
+                const lonN = Number(parts[1]);
+                const valid = !Number.isNaN(latN) && !Number.isNaN(lonN);
+                return valid ? (
+                  <Suspense
+                    fallback={
+                      <div className="py-2">Loading hourly forecast…</div>
+                    }
+                  >
+                    <HourlyForecast lat={latN} lon={lonN} />
+                  </Suspense>
+                ) : (
+                  <div className="py-2 text-sm text-red-500">
+                    Invalid coordinates
+                  </div>
+                );
+              })()}
           </div>
         </div>
       </div>

@@ -63,7 +63,7 @@ export default function Home() {
 
       <div className="w-full max-w-6xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div className="text-center md:text-left">
+          <div className="text-center md:text-left ml-auto">
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-3 bg-gradient-to-r from-sky-400 via-indigo-500 to-rose-400 bg-clip-text text-transparent">
               So... how's the weather?
             </h1>

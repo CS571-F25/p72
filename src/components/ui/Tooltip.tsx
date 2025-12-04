@@ -17,6 +17,7 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, className }) => {
     top: number;
     placement: "top" | "bottom";
   } | null>(null);
+  const hideTimerRef = useRef<number | null>(null);
 
   useLayoutEffect(() => {
     if (!visible) return;
@@ -38,9 +39,26 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, className }) => {
     update();
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
+
+    // hide on pointerdown anywhere (covers cases where tooltip remains)
+    function onPointerDown() {
+      if (hideTimerRef.current) {
+        window.clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+      setVisible(false);
+      setPos(null);
+    }
+
+    document.addEventListener("pointerdown", onPointerDown);
+
     return () => {
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
+      document.removeEventListener("pointerdown", onPointerDown);
+      if (hideTimerRef.current) {
+        window.clearTimeout(hideTimerRef.current);
+      }
     };
   }, [visible]);
 
@@ -50,7 +68,7 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, className }) => {
       role="tooltip"
       className="z-50 w-max max-w-xs rounded-md bg-gray-900 text-white text-xs leading-snug px-2 py-1 shadow-lg"
       style={
-        pos
+        visible && pos
           ? {
               position: "fixed",
               left: pos.left,
@@ -59,8 +77,14 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, className }) => {
                 pos.placement === "top"
                   ? "translate(-50%, -100%)"
                   : "translate(-50%, 0)",
+              pointerEvents: "none",
             }
-          : { position: "fixed", left: -9999, top: -9999 }
+          : {
+              position: "fixed",
+              left: -9999,
+              top: -9999,
+              pointerEvents: "none",
+            }
       }
       aria-hidden={!visible}
     >
@@ -74,11 +98,24 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, className }) => {
         ref={targetRef}
         tabIndex={0}
         aria-describedby={idRef.current}
-        onMouseEnter={() => setVisible(true)}
-        onMouseLeave={() => setVisible(false)}
+        onPointerEnter={() => {
+          if (hideTimerRef.current) {
+            window.clearTimeout(hideTimerRef.current);
+            hideTimerRef.current = null;
+          }
+          setVisible(true);
+        }}
+        onPointerLeave={() => {
+          hideTimerRef.current = window.setTimeout(() => {
+            setVisible(false);
+            setPos(null);
+          }, 80);
+        }}
         onFocus={() => setVisible(true)}
-        onBlur={() => setVisible(false)}
-        onClick={() => setVisible((v) => !v)}
+        onBlur={() => {
+          setVisible(false);
+          setPos(null);
+        }}
         className="inline-flex items-center"
       >
         {children}
