@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 
 type Interval = {
   startTime: string;
   values?: Record<string, any>;
 };
+
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+const CACHE = new Map<string, { ts: number; intervals: Interval[] }>();
 
 export default function HourlyForecast({
   lat,
@@ -16,20 +19,71 @@ export default function HourlyForecast({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [intervals, setIntervals] = useState<Interval[]>([]);
-  const intervalsRef = useRef<Interval[]>([]);
-  intervalsRef.current = intervals;
+  const mountedRef = useRef(true);
 
   const unitSymbol = "°F";
   const timezone = "UTC";
 
   useEffect(() => {
-    const controller = new AbortController();
+    mountedRef.current = true;
+    const key = `${lat},${lon}`;
+    const cached = CACHE.get(key);
+    const now = Date.now();
 
-    // Only show the loading UI if we have no data yet.
-    if (intervalsRef.current.length === 0) {
-      setLoading(true);
+    // If cache valid, show it immediately and refresh in background.
+    if (cached && now - cached.ts < CACHE_TTL) {
+      setIntervals(cached.intervals);
+      setLoading(false);
+      setError(null);
+      // background refresh (no UI loading)
+      const controller = new AbortController();
+      (async () => {
+        try {
+          const BASE = import.meta.env.VITE_WEATHER_API_BASE_URL || "";
+          const params = new URLSearchParams({ location: `${lat},${lon}` });
+          const endpoint = BASE
+            ? `${BASE}/api/weather-forecast?${params.toString()}`
+            : `/api/weather-forecast?${params.toString()}`;
+
+          const res = await axios.get(endpoint, { signal: controller.signal });
+          const body = res.data;
+          const found: Interval[] | undefined =
+            body?.data?.timelines?.[0]?.intervals ||
+            body?.timelines?.[0]?.intervals ||
+            body?.data?.intervals ||
+            body?.intervals;
+
+          if (found && Array.isArray(found) && found.length > 0) {
+            const next = found.slice(0, 24);
+            CACHE.set(key, { ts: Date.now(), intervals: next });
+            if (mountedRef.current) setIntervals(next);
+          }
+        } catch (err: any) {
+          if (
+            err?.name === "CanceledError" ||
+            err?.name === "AbortError" ||
+            err?.code === "ERR_CANCELED" ||
+            axios.isCancel?.(err)
+          ) {
+            return;
+          }
+          // don't overwrite UI on background failure
+          console.warn(
+            "HourlyForecast background refresh failed:",
+            err?.message || err
+          );
+        }
+      })();
+      return () => {
+        mountedRef.current = false;
+        // abort background if needed
+      };
     }
+
+    // No cache: fetch and show loading placeholder
+    setLoading(true);
     setError(null);
+    const controller = new AbortController();
 
     (async () => {
       try {
@@ -41,7 +95,6 @@ export default function HourlyForecast({
 
         const res = await axios.get(endpoint, { signal: controller.signal });
         const body = res.data;
-
         const found: Interval[] | undefined =
           body?.data?.timelines?.[0]?.intervals ||
           body?.timelines?.[0]?.intervals ||
@@ -52,8 +105,9 @@ export default function HourlyForecast({
           throw new Error("No hourly data returned");
         }
 
-        // replace intervals only after a successful fetch
-        setIntervals(found.slice(0, 24));
+        const next = found.slice(0, 24);
+        CACHE.set(key, { ts: Date.now(), intervals: next });
+        if (mountedRef.current) setIntervals(next);
       } catch (err: any) {
         if (
           err?.name === "CanceledError" ||
@@ -63,14 +117,16 @@ export default function HourlyForecast({
         ) {
           return;
         }
-        setError(err?.message || String(err));
+        if (mountedRef.current) setError(err?.message || String(err));
       } finally {
-        // always clear loading flag (if we were showing it)
-        setLoading(false);
+        if (mountedRef.current) setLoading(false);
       }
     })();
 
-    return () => controller.abort();
+    return () => {
+      mountedRef.current = false;
+      controller.abort();
+    };
   }, [lat, lon]);
 
   const rows = useMemo(
@@ -90,7 +146,7 @@ export default function HourlyForecast({
     [intervals]
   );
 
-  // Only show the loading placeholder when there's no data to display yet.
+  // Only show the loading placeholder when there is no data to display yet.
   if (loading && intervals.length === 0)
     return (
       <div className="py-2">
