@@ -34,8 +34,8 @@ export default function News() {
 
       const response = await axios.get(endpoint);
       const data = response.data;
-      const items: Article[] = Array.isArray(data?.articles)
-        ? data.articles.map((item: Article) => ({
+      const items: Article[] = Array.isArray(data)
+        ? data.map((item: Article) => ({
             title: item.title,
             link: item.link,
             description: item.description,
