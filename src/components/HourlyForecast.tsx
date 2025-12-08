@@ -22,7 +22,7 @@ export default function HourlyForecast({
   const mountedRef = useRef(true);
 
   const unitSymbol = "°F";
-  const timezone = "UTC";
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
   useEffect(() => {
     mountedRef.current = true;
