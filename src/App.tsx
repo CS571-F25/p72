@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, NavLink, Link } from "react-router-dom";
 import Home from "./components/Home";
 import AboutMe from "./components/AboutMe";
 import Weather from "./components/Weather";
+import News from "./components/News";
 
 function App() {
   const navRef = useRef<HTMLElement | null>(null);
@@ -77,6 +78,18 @@ function App() {
               >
                 Weather
               </NavLink>
+              <NavLink
+                to="/news"
+                className={({ isActive }) =>
+                  `text-sm font-medium px-3 py-2 rounded-md transition-all ${
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  }`
+                }
+              >
+                News
+              </NavLink>
             </div>
           </div>
         </nav>
@@ -86,6 +99,7 @@ function App() {
             <Route path="/" element={<Home />}></Route>
             <Route path="/about" element={<AboutMe />}></Route>
             <Route path="/weather" element={<Weather />}></Route>
+            <Route path="/news" element={<News />}></Route>
           </Routes>
         </main>
       </HashRouter>
