@@ -5,7 +5,6 @@ import Article from "@/components/Article";
 type Article = {
   title: string;
   link: string;
-  description?: string;
   pubDate?: string;
   source?: string;
 };
@@ -38,11 +37,16 @@ export default function News() {
         ? data.map((item: Article) => ({
             title: item.title,
             link: item.link,
-            description: item.description,
             pubDate: item.pubDate,
             source: (item as any).source,
           }))
         : [];
+      // Sort by most recent first
+      items.sort((a, b) => {
+        const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+        const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+        return dateB - dateA;
+      });
       setArticles(items);
     } catch (err: any) {
       setError(err?.message || "Failed to fetch news.");
@@ -90,7 +94,6 @@ export default function News() {
             key={`${article.link || article.title}-${idx}`}
             title={article.title}
             link={article.link}
-            description={article.description}
             pubDate={article.pubDate}
             source={article.source}
           />

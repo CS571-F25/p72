@@ -1,7 +1,6 @@
 type ArticleProps = {
   title: string;
   link?: string;
-  description?: string;
   pubDate?: string;
   source?: string;
 };
@@ -10,12 +9,11 @@ type ArticleProps = {
 export default function Article({
   title,
   link,
-  description,
   pubDate,
   source,
 }: ArticleProps) {
   return (
-    <article className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-white dark:bg-slate-900 shadow-sm">
+    <article className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-white dark:bg-slate-900 shadow-sm max-w-2xl">
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-lg font-semibold leading-snug">
           {link ? (
@@ -42,12 +40,6 @@ export default function Article({
         <div className="text-xs text-muted-foreground mt-1">
           {new Date(pubDate).toLocaleString()}
         </div>
-      )}
-
-      {description && (
-        <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 line-clamp-3">
-          {description}
-        </p>
       )}
     </article>
   );
