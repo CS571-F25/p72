@@ -1,6 +1,9 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import Article from "@/components/Article";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type Article = {
   title: string;
@@ -64,28 +67,31 @@ export default function News() {
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <input
+        <Input
           value={loc}
           onChange={(e) => setLoc(e.target.value)}
           placeholder="Enter location (optional)"
-          className="border rounded-md px-3 py-2 flex-1 min-w-0"
+          className="flex-1"
         />
-        <button
-          onClick={() => loadNews()}
-          className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-        >
-          Refresh News
-        </button>
+        <Button onClick={() => loadNews()}>Refresh News</Button>
       </div>
 
       {loading && articles.length === 0 && (
-        <div className="text-sm text-muted-foreground">Loading news…</div>
+        <Alert>
+          <AlertDescription>Loading news…</AlertDescription>
+        </Alert>
       )}
 
-      {error && !loading && <div className="text-sm text-red-500">{error}</div>}
+      {error && !loading && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {!loading && articles.length === 0 && !error && (
-        <div className="text-sm text-muted-foreground">No articles found.</div>
+        <Alert>
+          <AlertDescription>No articles found.</AlertDescription>
+        </Alert>
       )}
 
       <div className="grid gap-3">

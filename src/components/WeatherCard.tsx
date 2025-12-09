@@ -26,6 +26,7 @@ import stormAnimation from "@/assets/lottie/storm.json";
 import windAnimation from "@/assets/lottie/wind.json";
 import snowAnimation from "@/assets/lottie/snow.json";
 import rainWindAnimation from "@/assets/lottie/rain-wind.json";
+import { tempDisplay } from "@/lib/temperature";
 
 interface WeatherCardProps {
   location: string; // e.g., "Austin,TX"
@@ -322,7 +323,6 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
             <CardTitle
               className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors flex items-center gap-2 group flex-1 min-w-0 "
               onClick={() => setEditingName(true)}
-              title={`Weather in ${customName ? customName : location}`}
             >
               <span className="line-clamp-3">
                 Weather in {customName ? customName : location}
@@ -374,10 +374,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
               className="w-32 h-32"
             />
             <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-500">
-              {weather.temperature.toFixed(1)}°C
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {((weather.temperature * 9) / 5 + 32).toFixed(1)}°F
+              {tempDisplay(weather.temperature)}
             </p>
             <p className="text-base text-gray-600 dark:text-gray-400 font-medium">
               {weather.condition}
@@ -449,8 +446,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                           <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
                         </>
                       </Tooltip>
-                      <span className="text-sm font-semibold">
-                        {weather.feelsLike.toFixed(1)}°C
+                      <span className="text-sm  ">
+                        {tempDisplay(weather.feelsLike)}
                       </span>
                     </div>
                   )}
@@ -465,8 +462,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                           <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
                         </>
                       </Tooltip>
-                      <span className="text-sm font-semibold">
-                        {weather.dewPoint.toFixed(1)}°C
+                      <span className="text-sm  ">
+                        {tempDisplay(weather.dewPoint)}
                       </span>
                     </div>
                   )}
@@ -481,9 +478,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                           <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
                         </>
                       </Tooltip>
-                      <span className="text-sm font-semibold">
-                        {weather.humidity}%
-                      </span>
+                      <span className="text-sm  ">{weather.humidity}%</span>
                     </div>
                   )}
 
@@ -497,7 +492,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                           <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
                         </>
                       </Tooltip>
-                      <span className="text-sm font-semibold">
+                      <span className="text-sm  ">
                         {Math.round(weather.precipitationProbability)}%
                       </span>
                     </div>
@@ -514,7 +509,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                           <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
                         </>
                       </Tooltip>
-                      <span className="text-sm font-semibold">
+                      <span className="text-sm  ">
                         {weather.windSpeed !== undefined
                           ? `${weather.windSpeed.toFixed(1)} m/s`
                           : "-"}
@@ -535,7 +530,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                           <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
                         </>
                       </Tooltip>
-                      <span className="text-sm font-semibold">
+                      <span className="text-sm  ">
                         {degreesToCardinal(weather.windDirection)} (
                         {Math.round(weather.windDirection)}°)
                       </span>
@@ -552,7 +547,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                           <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
                         </>
                       </Tooltip>
-                      <span className="text-sm font-semibold">
+                      <span className="text-sm  ">
                         {weather.visibility > 1000
                           ? `${(weather.visibility / 1000).toFixed(1)} km`
                           : `${weather.visibility} km`}
@@ -570,7 +565,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                           <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
                         </>
                       </Tooltip>
-                      <span className="text-sm font-semibold">
+                      <span className="text-sm  ">
                         {Math.round(weather.cloudCover)}%
                       </span>
                     </div>
@@ -587,7 +582,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                           <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
                         </>
                       </Tooltip>
-                      <span className="text-sm font-semibold">
+                      <span className="text-sm  ">
                         {(weather.pressureSeaLevel ??
                           weather.pressureSurfaceLevel)!.toFixed(0)}{" "}
                         hPa
@@ -605,7 +600,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                           <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
                         </>
                       </Tooltip>
-                      <span className="text-sm font-semibold">
+                      <span className="text-sm  ">
                         {weather.altimeterSetting.toFixed(2)} hPa
                       </span>
                     </div>

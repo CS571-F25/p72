@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
+import { Card } from "@/components/ui/card";
+import { tempDisplay } from "@/lib/temperature";
 
 type Interval = {
   startTime: string;
@@ -21,7 +23,6 @@ export default function HourlyForecast({
   const [intervals, setIntervals] = useState<Interval[]>([]);
   const mountedRef = useRef(true);
 
-  const unitSymbol = "°F";
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
   useEffect(() => {
@@ -165,23 +166,25 @@ export default function HourlyForecast({
 
   return (
     <div className="py-2">
-      <div className="text-sm text-muted-foreground mb-2">Hourly (24h)</div>
+      <div className="text-sm text-muted-foreground mb-3 font-medium">
+        Hourly (24h)
+      </div>
       <div className="flex gap-2 overflow-x-auto pb-2">
         {rows.map((r, i) => (
-          <div
+          <Card
             key={i}
-            className="flex-none w-20 p-2 rounded-lg bg-gray-50 dark:bg-slate-800 text-center"
+            className="flex-none w-20 p-2 text-center flex flex-col items-center justify-center"
           >
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground truncate w-full">
               {r.t.toLocaleTimeString([], {
                 hour: "numeric",
                 timeZone: timezone,
               })}
             </div>
-            <div className="text-sm font-medium mt-1">
-              {r.temp == null ? "—" : `${r.temp}${unitSymbol}`}
+            <div className="text-sm font-semibold mt-2">
+              {r.temp == null ? "—" : tempDisplay(r.temp)}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>
