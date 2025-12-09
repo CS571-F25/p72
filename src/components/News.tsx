@@ -4,6 +4,7 @@ import Article from "@/components/Article";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
 
 type Article = {
   title: string;
@@ -66,13 +67,17 @@ export default function News() {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Input
-          value={loc}
-          onChange={(e) => setLoc(e.target.value)}
-          placeholder="Enter location (optional)"
-          className="flex-1"
-        />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <div className="flex-1 space-y-1">
+          <Label htmlFor="location">Location (optional)</Label>
+          <Input
+            id="location"
+            value={loc}
+            onChange={(e) => setLoc(e.target.value)}
+            placeholder="Enter location"
+            className="flex-1"
+          />
+        </div>
         <Button onClick={() => loadNews()}>Refresh News</Button>
       </div>
 

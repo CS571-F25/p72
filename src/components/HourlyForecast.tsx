@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { Card } from "@/components/ui/card";
 import { tempDisplay } from "@/lib/temperature";
 
 type Interval = {
@@ -171,20 +170,20 @@ export default function HourlyForecast({
       </div>
       <div className="flex gap-2 overflow-x-auto pb-2">
         {rows.map((r, i) => (
-          <Card
+          <div
             key={i}
-            className="flex-none w-20 p-2 text-center flex flex-col items-center justify-center"
+            className="flex-none w-16 p-2 text-center flex flex-col items-center justify-center rounded-lg bg-gray-50 dark:bg-slate-800 text-xs"
           >
-            <div className="text-xs text-muted-foreground truncate w-full">
+            <div className="text-muted-foreground truncate w-full">
               {r.t.toLocaleTimeString([], {
                 hour: "numeric",
                 timeZone: timezone,
               })}
             </div>
-            <div className="text-sm font-semibold mt-2">
+            <div className="font-semibold mt-1">
               {r.temp == null ? "—" : tempDisplay(r.temp)}
             </div>
-          </Card>
+          </div>
         ))}
       </div>
     </div>
