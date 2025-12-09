@@ -67,7 +67,13 @@ export default function News() {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          loadNews();
+        }}
+        className="flex flex-col gap-2 sm:flex-row sm:items-end"
+      >
         <div className="flex-1 space-y-1">
           <Label htmlFor="location">Location (optional)</Label>
           <Input
@@ -78,8 +84,8 @@ export default function News() {
             className="flex-1"
           />
         </div>
-        <Button onClick={() => loadNews()}>Refresh News</Button>
-      </div>
+        <Button type="submit">Refresh News</Button>
+      </form>
 
       {loading && articles.length === 0 && (
         <Alert>

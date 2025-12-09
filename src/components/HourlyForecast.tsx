@@ -133,9 +133,8 @@ export default function HourlyForecast({
     () =>
       intervals.map((iv) => {
         const t = new Date(iv.startTime);
-        const rawTemp =
+        const temp =
           iv.values?.temperature ?? iv.values?.temperatureApparent ?? null;
-        const temp = rawTemp == null ? null : Math.round(rawTemp);
         const pop =
           iv.values?.precipitationProbability ??
           iv.values?.precipitation ??
