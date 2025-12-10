@@ -2,19 +2,24 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useRef } from "react";
+import { useState } from "react";
 import UseMyLocationButton from "@/components/UseMyLocationButton";
 import React from "react";
+import { AlertBadCoordinates } from "@/components/Alerts";
 
 const GoogleMapPicker = React.lazy(() => import("./GoogleMapPicker"));
 
 export default function LocationTabs({
   onSubmit,
+  locationsCount = 0,
 }: {
   onSubmit: (data: any) => void;
+  locationsCount?: number;
 }) {
-  const latRef = useRef<HTMLInputElement>(null);
-  const lonRef = useRef<HTMLInputElement>(null);
+  const [lat, setLat] = useState("");
+  const [lon, setLon] = useState("");
+
+  const [showCoordsWarning, setShowCoordsWarning] = useState<Boolean>(false);
 
   function isValidCoordinate(lat: string, lon: string): boolean {
     const latNum = Number(lat);
@@ -44,7 +49,10 @@ export default function LocationTabs({
                 </div>
               }
             >
-              <GoogleMapPicker onPick={onSubmit} />
+              <GoogleMapPicker
+                onPick={onSubmit}
+                disabled={locationsCount >= 3}
+              />
             </React.Suspense>
           </div>
         </TabsContent>
@@ -52,17 +60,20 @@ export default function LocationTabs({
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (!latRef.current || !lonRef.current) return;
-              if (
-                isValidCoordinate(latRef.current.value, lonRef.current.value)
-              ) {
+              if (isValidCoordinate(lat, lon)) {
                 onSubmit({
                   type: "coords",
-                  lat: parseFloat(latRef.current.value),
-                  lon: parseFloat(lonRef.current.value),
+                  lat: parseFloat(lat),
+                  lon: parseFloat(lon),
                 });
-                latRef.current.value = "";
-                lonRef.current.value = "";
+                setLat("");
+                setLon("");
+              } else {
+                setShowCoordsWarning(true);
+                setTimeout(() => {
+                  setShowCoordsWarning(false);
+                }, 5000);
+                return;
               }
             }}
             className="space-y-4 mt-4"
@@ -77,7 +88,8 @@ export default function LocationTabs({
                   type="number"
                   step="any"
                   placeholder="e.g. 40.7128"
-                  ref={latRef}
+                  value={lat}
+                  onChange={(e) => setLat(e.target.value)}
                   className="mt-2 h-10 rounded-lg"
                 />
               </div>
@@ -90,7 +102,8 @@ export default function LocationTabs({
                   type="number"
                   step="any"
                   placeholder="e.g. -74.0060"
-                  ref={lonRef}
+                  value={lon}
+                  onChange={(e) => setLon(e.target.value)}
                   className="mt-2 h-10 rounded-lg"
                 />
               </div>
@@ -98,13 +111,22 @@ export default function LocationTabs({
             <div className="grid grid-cols-2 gap-3">
               <Button
                 type="submit"
-                className="w-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white h-11 shadow-lg"
+                disabled={locationsCount >= 3 || !lat || !lon}
+                className="w-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white h-11 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add Location
               </Button>
-              <UseMyLocationButton onSubmit={onSubmit} />
+              <UseMyLocationButton
+                onSubmit={onSubmit}
+                disabled={locationsCount >= 3}
+              />
             </div>
           </form>
+          {showCoordsWarning ? (
+            <AlertBadCoordinates></AlertBadCoordinates>
+          ) : (
+            <></>
+          )}
         </TabsContent>
       </Tabs>
     </div>

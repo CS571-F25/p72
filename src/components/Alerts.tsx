@@ -30,3 +30,10 @@ export function AlertAlreadyExists() {
     "Please try adding a different location."
   );
 }
+
+export function AlertBadCoordinates() {
+  return AlertWarn(
+    "These coordinates aren't real!",
+    "Please try latitudes within -90 to 90 and longitudes within -180 to 180."
+  );
+}

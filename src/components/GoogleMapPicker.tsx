@@ -24,10 +24,12 @@ export default function GoogleMapPicker({
   onPick,
   initial,
   enableSearch = true,
+  disabled = false,
 }: {
   onPick: (p: Pick) => void;
   initial?: { lat: number; lon: number };
   enableSearch?: boolean;
+  disabled?: boolean;
 }) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
   const { isLoaded, loadError } = useJsApiLoader({
@@ -99,7 +101,7 @@ export default function GoogleMapPicker({
 
   const handleMapClick = useCallback(
     async (e: google.maps.MapMouseEvent) => {
-      if (!e.latLng) return;
+      if (disabled || !e.latLng) return;
       const lat = round4(e.latLng.lat());
       const lng = round4(e.latLng.lng());
       setMarker({ lat, lng });
@@ -107,7 +109,7 @@ export default function GoogleMapPicker({
       // update imperatively-managed marker on the map
       // (we sync in effect watching marker state)
     },
-    [reverseGeocode]
+    [disabled, reverseGeocode]
   );
 
   // Marker drag is handled on the imperatively-created marker (fallbackMarkerRef)
@@ -115,6 +117,7 @@ export default function GoogleMapPicker({
 
   // use-my-location
   const handleUseMyLocation = useCallback(async () => {
+    if (disabled) return;
     setGeoError(null);
     if (!("geolocation" in navigator)) {
       setGeoError("Geolocation not supported in this browser.");
@@ -156,13 +159,13 @@ export default function GoogleMapPicker({
     } finally {
       setIsFetching(false);
     }
-  }, [reverseGeocode]);
+  }, [disabled, reverseGeocode]);
 
   const handleAdd = useCallback(() => {
-    if (!marker) return;
+    if (disabled || !marker) return;
     const name = placeLabel ?? `${marker.lat}, ${marker.lng}`;
     onPick({ type: "coords", lat: marker.lat, lon: marker.lng, name });
-  }, [marker, onPick, placeLabel]);
+  }, [disabled, marker, onPick, placeLabel]);
 
   // --- AutocompleteService + UI (replaces the Autocomplete component)
   useEffect(() => {
@@ -557,14 +560,19 @@ export default function GoogleMapPicker({
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+    <div
+      className={`rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 ${
+        disabled ? "opacity-60" : ""
+      }`}
+      aria-disabled={disabled}
+    >
       <div className="p-3">
         <div className="flex gap-2 mb-3">
           <button
             type="button"
             onClick={handleUseMyLocation}
-            className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-3 py-2 shadow text-sm"
-            disabled={isFetching}
+            className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-3 py-2 shadow text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isFetching || disabled}
           >
             {isFetching ? "Locating…" : "Use my location"}
           </button>
@@ -574,8 +582,8 @@ export default function GoogleMapPicker({
               mapRef.current?.panTo(defaultCenter);
               mapRef.current?.setZoom(2);
             }}
-            className="rounded-full px-3 py-2 border text-sm"
-            disabled={isFetching}
+            className="rounded-full px-3 py-2 border text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isFetching || disabled}
           >
             Reset view
           </button>
@@ -591,8 +599,9 @@ export default function GoogleMapPicker({
                 if (predictions.length) setShowPredictions(true);
               }}
               onKeyDown={handleKeyDown}
-              className="w-full rounded-full px-4 py-2 border"
+              className="w-full rounded-full px-4 py-2 border disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
               placeholder="Search address or place"
+              disabled={disabled}
               aria-label="Search location"
             />
 
@@ -623,7 +632,7 @@ export default function GoogleMapPicker({
           onLoad={onLoadMap}
           onUnmount={onUnmountMap}
           options={{
-            gestureHandling: "auto",
+            gestureHandling: disabled ? "none" : "auto",
             fullscreenControl: false,
             streetViewControl: false,
           }}
@@ -648,13 +657,13 @@ export default function GoogleMapPicker({
           <button
             className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-3 py-2 shadow text-sm"
             onClick={handleAdd}
-            disabled={!marker || isFetching}
+            disabled={!marker || isFetching || disabled}
           >
             {isFetching ? "Locating…" : "Add Location"}
           </button>
 
           <button
-            className="rounded-full px-3 py-2 border"
+            className="rounded-full px-3 py-2 border disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => {
               setMarker(null);
               setPlaceLabel(null);
@@ -663,6 +672,7 @@ export default function GoogleMapPicker({
               setPredictions([]);
               setShowPredictions(false);
             }}
+            disabled={disabled}
           >
             Clear
           </button>

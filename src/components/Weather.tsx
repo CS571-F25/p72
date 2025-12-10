@@ -94,7 +94,10 @@ function Weather() {
           </div>
 
           <div className="mb-12">
-            <LocationTabs onSubmit={handleSubmit}></LocationTabs>
+            <LocationTabs
+              onSubmit={handleSubmit}
+              locationsCount={locations.length}
+            ></LocationTabs>
           </div>
 
           {showMaxWarning ? <AlertMaxLocations></AlertMaxLocations> : <></>}
@@ -105,11 +108,11 @@ function Weather() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {locations.map((location, i) => {
+            {locations.map((location) => {
               if (import.meta.env.DEV) {
                 return (
                   <WeatherCardDev
-                    key={i}
+                    key={location.location}
                     location={location.location}
                     name={location.name}
                   />
@@ -117,7 +120,7 @@ function Weather() {
               }
               return (
                 <WeatherCard
-                  key={i}
+                  key={location.location}
                   location={location.location}
                   name={location.name}
                 />

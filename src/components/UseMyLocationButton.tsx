@@ -3,8 +3,10 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 
 export default function UseMyLocationButton({
   onSubmit,
+  disabled = false,
 }: {
   onSubmit: (data: any) => void;
+  disabled?: boolean;
 }) {
   const { getCurrentPosition, loading } = useGeolocation();
 
@@ -40,8 +42,8 @@ export default function UseMyLocationButton({
     <div>
       <Button
         onClick={handleUseLocation}
-        disabled={loading}
-        className="w-full h-11 rounded-full"
+        disabled={loading || disabled}
+        className="w-full h-11 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Locating…" : "Use my location"}
       </Button>
