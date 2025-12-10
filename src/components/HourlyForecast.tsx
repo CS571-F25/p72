@@ -10,6 +10,14 @@ type Interval = {
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 const CACHE = new Map<string, { ts: number; intervals: Interval[] }>();
 
+const pickNext24 = (intervals: Interval[]) => {
+  const now = Date.now();
+  const future = intervals.filter(
+    (iv) => new Date(iv.startTime).getTime() >= now
+  );
+  return (future.length ? future : intervals).slice(0, 24);
+};
+
 export default function HourlyForecast({
   lat,
   lon,
@@ -32,7 +40,7 @@ export default function HourlyForecast({
 
     // If cache valid, show it immediately and refresh in background.
     if (cached && now - cached.ts < CACHE_TTL) {
-      setIntervals(cached.intervals);
+      setIntervals(cached.intervals); // store full response
       setLoading(false);
       setError(null);
       // background refresh (no UI loading)
@@ -54,9 +62,8 @@ export default function HourlyForecast({
             body?.intervals;
 
           if (found && Array.isArray(found) && found.length > 0) {
-            const next = found.slice(0, 24);
-            CACHE.set(key, { ts: Date.now(), intervals: next });
-            if (mountedRef.current) setIntervals(next);
+            CACHE.set(key, { ts: Date.now(), intervals: found }); // cache full response
+            if (mountedRef.current) setIntervals(found);
           }
         } catch (err: any) {
           if (
@@ -67,7 +74,6 @@ export default function HourlyForecast({
           ) {
             return;
           }
-          // don't overwrite UI on background failure
           console.warn(
             "HourlyForecast background refresh failed:",
             err?.message || err
@@ -76,7 +82,6 @@ export default function HourlyForecast({
       })();
       return () => {
         mountedRef.current = false;
-        // abort background if needed
       };
     }
 
@@ -105,9 +110,8 @@ export default function HourlyForecast({
           throw new Error("No hourly data returned");
         }
 
-        const next = found.slice(0, 24);
-        CACHE.set(key, { ts: Date.now(), intervals: next });
-        if (mountedRef.current) setIntervals(next);
+        CACHE.set(key, { ts: Date.now(), intervals: found }); // cache full response
+        if (mountedRef.current) setIntervals(found);
       } catch (err: any) {
         if (
           err?.name === "CanceledError" ||
@@ -129,21 +133,18 @@ export default function HourlyForecast({
     };
   }, [lat, lon]);
 
-  const rows = useMemo(
-    () =>
-      intervals.map((iv) => {
-        const t = new Date(iv.startTime);
-        const temp =
-          iv.values?.temperature ?? iv.values?.temperatureApparent ?? null;
-        const pop =
-          iv.values?.precipitationProbability ??
-          iv.values?.precipitation ??
-          null;
-        const wind = iv.values?.windSpeed ?? null;
-        return { t, temp, pop, wind };
-      }),
-    [intervals]
-  );
+  const rows = useMemo(() => {
+    const next24 = pickNext24(intervals); // slice to next 24 on render
+    return next24.map((iv) => {
+      const t = new Date(iv.startTime);
+      const temp =
+        iv.values?.temperature ?? iv.values?.temperatureApparent ?? null;
+      const pop =
+        iv.values?.precipitationProbability ?? iv.values?.precipitation ?? null;
+      const wind = iv.values?.windSpeed ?? null;
+      return { t, temp, pop, wind };
+    });
+  }, [intervals]);
 
   // Only show the loading placeholder when there is no data to display yet.
   if (loading && intervals.length === 0)
