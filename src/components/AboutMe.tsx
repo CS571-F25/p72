@@ -75,7 +75,7 @@ export default function AboutMe() {
               </Button>
               <Button variant="outline" asChild>
                 <a
-                  href="https://woopxwoop.github.io/Portfolio-Website/"
+                  href="https://woopxwoop.github.io/portfolio/"
                   target="_blank"
                   rel="noreferrer"
                 >
