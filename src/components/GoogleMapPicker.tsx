@@ -39,7 +39,7 @@ export default function GoogleMapPicker({
   });
 
   const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(
-    initial ? { lat: initial.lat, lng: initial.lon } : null
+    initial ? { lat: initial.lat, lng: initial.lon } : null,
   );
   const [placeLabel, setPlaceLabel] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -109,7 +109,7 @@ export default function GoogleMapPicker({
       // update imperatively-managed marker on the map
       // (we sync in effect watching marker state)
     },
-    [disabled, reverseGeocode]
+    [disabled, reverseGeocode],
   );
 
   // Marker drag is handled on the imperatively-created marker (fallbackMarkerRef)
@@ -139,7 +139,7 @@ export default function GoogleMapPicker({
             clearTimeout(timer);
             reject(err);
           },
-          { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 },
         );
       });
 
@@ -154,7 +154,7 @@ export default function GoogleMapPicker({
     } catch (err: any) {
       setGeoError(
         err?.message ||
-          "Failed to get location. Check browser permissions and try again."
+          "Failed to get location. Check browser permissions and try again.",
       );
     } finally {
       setIsFetching(false);
@@ -241,7 +241,7 @@ export default function GoogleMapPicker({
                   place.formatted_address ??
                     place.name ??
                     inputRef.current?.value ??
-                    null
+                    null,
                 );
                 mapRef.current?.panTo({ lat, lng });
                 mapRef.current?.setZoom(8);
@@ -268,7 +268,7 @@ export default function GoogleMapPicker({
                     setPlaceLabel(
                       getLabelFromGeocode(body) ??
                         inputRef.current?.value ??
-                        null
+                        null,
                     );
                     mapRef.current?.panTo({ lat, lng });
                     mapRef.current?.setZoom(8);
@@ -298,7 +298,7 @@ export default function GoogleMapPicker({
           if (el.addEventListener) {
             try {
               el.addEventListener("select", (ev: any) =>
-                notify(ev?.detail || ev)
+                notify(ev?.detail || ev),
               );
               return;
             } catch (e) {
@@ -344,7 +344,7 @@ export default function GoogleMapPicker({
         setIsFetching(false);
       }
     },
-    []
+    [],
   );
 
   // Place selection via Enter key: if there's a first prediction, select it
@@ -353,7 +353,7 @@ export default function GoogleMapPicker({
       e.preventDefault();
       handleSelectPrediction(
         predictions[0].place_id,
-        predictions[0].description
+        predictions[0].description,
       );
     } else if (e.key === "Escape") {
       setShowPredictions(false);
@@ -552,26 +552,30 @@ export default function GoogleMapPicker({
   // Render loading / error states after hooks have been registered to keep
   // the Hooks call order stable across renders.
   if (loadError) {
-    return <div className="p-4 text-red-500">Failed to load Google Maps</div>;
+    return (
+      <div className="atmo-alert m-2">
+        <p className="atmo-alert-title">Map unavailable</p>
+        <p className="atmo-alert-body">Failed to load Google Maps.</p>
+      </div>
+    );
   }
 
   if (!isLoaded) {
-    return <div className="p-4">Loading map…</div>;
+    return <div className="atmo-empty p-4 text-sm">Loading map...</div>;
   }
 
   return (
     <div
-      className={`rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 ${
-        disabled ? "opacity-60" : ""
-      }`}
+      className={`atmo-panel overflow-hidden ${disabled ? "opacity-60" : ""}`}
       aria-disabled={disabled}
     >
-      <div className="p-3">
-        <div className="flex gap-2 mb-3">
+      <div className="p-4 border-b border-white/20">
+        <p className="atmo-kicker mb-2">Map Picker</p>
+        <div className="flex gap-2 mb-3 flex-wrap">
           <button
             type="button"
             onClick={handleUseMyLocation}
-            className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-3 py-2 shadow text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="atmo-button disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isFetching || disabled}
           >
             {isFetching ? "Locating…" : "Use my location"}
@@ -582,7 +586,7 @@ export default function GoogleMapPicker({
               mapRef.current?.panTo(defaultCenter);
               mapRef.current?.setZoom(2);
             }}
-            className="rounded-full px-3 py-2 border text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="atmo-button disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isFetching || disabled}
           >
             Reset view
@@ -599,18 +603,18 @@ export default function GoogleMapPicker({
                 if (predictions.length) setShowPredictions(true);
               }}
               onKeyDown={handleKeyDown}
-              className="w-full rounded-full px-4 py-2 border disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              className="atmo-input w-full disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Search address or place"
               disabled={disabled}
               aria-label="Search location"
             />
 
             {showPredictions && predictions.length > 0 && (
-              <ul className="absolute z-20 left-0 right-0 mt-2 bg-white dark:bg-slate-800 border rounded-lg shadow max-h-64 overflow-auto">
+              <ul className="absolute z-20 left-0 right-0 mt-2 atmo-panel max-h-64 overflow-auto p-1">
                 {predictions.map((p) => (
                   <li
                     key={p.place_id}
-                    className="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700"
+                    className="px-3 py-2 cursor-pointer rounded-lg text-sm hover:bg-white/10"
                     onMouseDown={(ev) => {
                       ev.preventDefault();
                       handleSelectPrediction(p.place_id, p.description);
@@ -624,38 +628,42 @@ export default function GoogleMapPicker({
           </div>
         )}
 
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={marker ? { lat: marker.lat, lng: marker.lng } : defaultCenter}
-          zoom={marker ? 6 : 2}
-          onClick={handleMapClick}
-          onLoad={onLoadMap}
-          onUnmount={onUnmountMap}
-          options={{
-            gestureHandling: disabled ? "none" : "auto",
-            fullscreenControl: false,
-            streetViewControl: false,
-          }}
-        />
+        <div className="atmo-map-frame">
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={
+              marker ? { lat: marker.lat, lng: marker.lng } : defaultCenter
+            }
+            zoom={marker ? 6 : 2}
+            onClick={handleMapClick}
+            onLoad={onLoadMap}
+            onUnmount={onUnmountMap}
+            options={{
+              gestureHandling: disabled ? "none" : "auto",
+              fullscreenControl: false,
+              streetViewControl: false,
+            }}
+          />
+        </div>
       </div>
 
       <div className="p-4 flex flex-col gap-3">
         <div>
-          <div className="text-sm text-muted-foreground">Selected</div>
-          <div className="text-sm font-medium">
+          <div className="atmo-kicker">Selected</div>
+          <div className="text-sm font-medium atmo-muted-copy">
             {marker ? `${marker.lat}, ${marker.lng}` : "None"}
           </div>
           {placeLabel && (
-            <div className="text-xs text-muted-foreground">{placeLabel}</div>
+            <div className="text-xs atmo-muted-copy">{placeLabel}</div>
           )}
           {geoError && (
-            <div className="text-xs text-red-500 mt-1">{geoError}</div>
+            <div className="text-xs text-red-100 mt-1">{geoError}</div>
           )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
-            className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-3 py-2 shadow text-sm"
+            className="atmo-button"
             onClick={handleAdd}
             disabled={!marker || isFetching || disabled}
           >
@@ -663,7 +671,7 @@ export default function GoogleMapPicker({
           </button>
 
           <button
-            className="rounded-full px-3 py-2 border disabled:opacity-50 disabled:cursor-not-allowed"
+            className="atmo-button disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => {
               setMarker(null);
               setPlaceLabel(null);

@@ -1,10 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import Article from "@/components/Article";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Label } from "@/components/ui/label";
 
 type Article = {
   title: string;
@@ -42,7 +38,7 @@ export default function News() {
             title: item.title,
             link: item.link,
             pubDate: item.pubDate,
-            source: (item as any).source,
+            source: item.source,
           }))
         : [];
       // Sort by most recent first
@@ -52,8 +48,8 @@ export default function News() {
         return dateB - dateA;
       });
       setArticles(items);
-    } catch (err: any) {
-      setError(err?.message || "Failed to fetch news.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to fetch news.");
       setArticles([]);
     } finally {
       setLoading(false);
@@ -66,56 +62,79 @@ export default function News() {
   }, []);
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-4">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          loadNews();
-        }}
-        className="flex flex-col gap-2 sm:flex-row sm:items-end"
-      >
-        <div className="flex-1 space-y-1">
-          <Label htmlFor="location">Location (optional)</Label>
-          <Input
-            id="location"
-            value={loc}
-            onChange={(e) => setLoc(e.target.value)}
-            placeholder="Enter location"
-            className="flex-1"
-          />
-        </div>
-        <Button type="submit">Refresh News</Button>
-      </form>
+    <section className="atmo-flat-page atmo-reveal">
+      <div className="atmo-flat-inner">
+        <header className="mb-7 atmo-reveal atmo-reveal-delay-1">
+          <p className="atmo-kicker">Weather Briefing</p>
+          <h1 className="atmo-title">Forecast Headlines</h1>
+          <p className="mt-3 text-sm atmo-muted-copy max-w-2xl">
+            Regional weather coverage in the same atmospheric style as your live
+            dashboard.
+          </p>
+        </header>
 
-      {loading && articles.length === 0 && (
-        <Alert>
-          <AlertDescription>Loading news…</AlertDescription>
-        </Alert>
-      )}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            loadNews();
+          }}
+          className="atmo-flat-controls mb-5 grid gap-3 lg:grid-cols-[1fr_auto] items-end"
+        >
+          <div>
+            <label htmlFor="location" className="atmo-kicker">
+              Location, optional
+            </label>
+            <input
+              id="location"
+              value={loc}
+              onChange={(e) => setLoc(e.target.value)}
+              placeholder="Search a city or region"
+              className="atmo-min-input mt-2"
+            />
+          </div>
+          <button type="submit" className="atmo-plain-link h-11 px-5">
+            Refresh edition
+          </button>
+        </form>
 
-      {error && !loading && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {loading && articles.length === 0 && (
+          <div className="atmo-flat-note">Compiling the latest edition...</div>
+        )}
 
-      {!loading && articles.length === 0 && !error && (
-        <Alert>
-          <AlertDescription>No articles found.</AlertDescription>
-        </Alert>
-      )}
+        {error && !loading && (
+          <div className="atmo-flat-note">News unavailable: {error}</div>
+        )}
 
-      <div className="grid gap-3">
-        {articles.map((article, idx) => (
-          <Article
-            key={`${article.link || article.title}-${idx}`}
-            title={article.title}
-            link={article.link}
-            pubDate={article.pubDate}
-            source={article.source}
-          />
-        ))}
+        {!loading && articles.length === 0 && !error && (
+          <div className="atmo-flat-note">No articles found.</div>
+        )}
+
+        {articles.length > 0 && (
+          <div className="grid gap-3 xl:grid-cols-[1.08fr_0.92fr] atmo-reveal atmo-reveal-delay-2">
+            <div className="grid gap-4">
+              <Article
+                title={articles[0].title}
+                link={articles[0].link}
+                pubDate={articles[0].pubDate}
+                source={articles[0].source}
+                featured={true}
+              />
+            </div>
+
+            <div className="grid gap-4 content-start">
+              {articles.slice(1).map((article, idx) => (
+                <Article
+                  key={`${article.link || article.title}-${idx}`}
+                  title={article.title}
+                  link={article.link}
+                  pubDate={article.pubDate}
+                  source={article.source}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </section>
   );
 }

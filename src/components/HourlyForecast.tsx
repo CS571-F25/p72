@@ -1,19 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { tempDisplay } from "@/lib/temperature";
+import { tempCompact } from "@/lib/temperature";
+import { useTheme } from "@/theme/useTheme";
 
 type Interval = {
   startTime: string;
-  values?: Record<string, any>;
+  values?: Record<string, number | string | null | undefined>;
 };
 
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 const CACHE = new Map<string, { ts: number; intervals: Interval[] }>();
 
+const isCanceledError = (err: unknown) => {
+  if (axios.isCancel?.(err)) return true;
+  if (!(err instanceof Error)) return false;
+
+  const withCode = err as Error & { code?: string };
+  return (
+    err.name === "CanceledError" ||
+    err.name === "AbortError" ||
+    withCode.code === "ERR_CANCELED"
+  );
+};
+
 const pickNext24 = (intervals: Interval[]) => {
   const now = Date.now();
   const future = intervals.filter(
-    (iv) => new Date(iv.startTime).getTime() >= now
+    (iv) => new Date(iv.startTime).getTime() >= now,
   );
   return (future.length ? future : intervals).slice(0, 24);
 };
@@ -25,6 +38,7 @@ export default function HourlyForecast({
   lat: number;
   lon: number;
 }) {
+  const { unit } = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [intervals, setIntervals] = useState<Interval[]>([]);
@@ -65,18 +79,13 @@ export default function HourlyForecast({
             CACHE.set(key, { ts: Date.now(), intervals: found }); // cache full response
             if (mountedRef.current) setIntervals(found);
           }
-        } catch (err: any) {
-          if (
-            err?.name === "CanceledError" ||
-            err?.name === "AbortError" ||
-            err?.code === "ERR_CANCELED" ||
-            axios.isCancel?.(err)
-          ) {
+        } catch (err: unknown) {
+          if (isCanceledError(err)) {
             return;
           }
           console.warn(
             "HourlyForecast background refresh failed:",
-            err?.message || err
+            err instanceof Error ? err.message : String(err),
           );
         }
       })();
@@ -112,16 +121,13 @@ export default function HourlyForecast({
 
         CACHE.set(key, { ts: Date.now(), intervals: found }); // cache full response
         if (mountedRef.current) setIntervals(found);
-      } catch (err: any) {
-        if (
-          err?.name === "CanceledError" ||
-          err?.name === "AbortError" ||
-          err?.code === "ERR_CANCELED" ||
-          axios.isCancel?.(err)
-        ) {
+      } catch (err: unknown) {
+        if (isCanceledError(err)) {
           return;
         }
-        if (mountedRef.current) setError(err?.message || String(err));
+        if (mountedRef.current) {
+          setError(err instanceof Error ? err.message : String(err));
+        }
       } finally {
         if (mountedRef.current) setLoading(false);
       }
@@ -137,12 +143,20 @@ export default function HourlyForecast({
     const next24 = pickNext24(intervals); // slice to next 24 on render
     return next24.map((iv) => {
       const t = new Date(iv.startTime);
-      const temp =
+      const tempRawC =
         iv.values?.temperature ?? iv.values?.temperatureApparent ?? null;
+      const tempC =
+        typeof tempRawC === "number"
+          ? tempRawC
+          : typeof tempRawC === "string"
+            ? Number.isFinite(Number(tempRawC))
+              ? Number(tempRawC)
+              : null
+            : null;
       const pop =
         iv.values?.precipitationProbability ?? iv.values?.precipitation ?? null;
       const wind = iv.values?.windSpeed ?? null;
-      return { t, temp, pop, wind };
+      return { t, tempC, pop, wind };
     });
   }, [intervals]);
 
@@ -150,38 +164,42 @@ export default function HourlyForecast({
   if (loading && intervals.length === 0)
     return (
       <div className="py-2">
-        <div className="text-sm text-muted-foreground">Hourly (24h)</div>
-        <div className="mt-2">Loading hourly forecast…</div>
+        <div className="text-xs font-mono uppercase tracking-[0.2em] opacity-70">
+          Hourly (24h)
+        </div>
+        <div className="mt-2 text-sm opacity-80">
+          Loading hourly forecast...
+        </div>
       </div>
     );
 
   // Show error only if there's no data to show
   if (error && intervals.length === 0)
     return (
-      <div className="py-2 text-sm text-red-500">
+      <div className="py-2 text-sm text-red-100">
         Error loading forecast: {error}
       </div>
     );
 
   return (
     <div className="py-2">
-      <div className="text-sm text-muted-foreground mb-3 font-medium">
+      <div className="text-xs font-mono uppercase tracking-[0.2em] opacity-70 mb-3">
         Hourly (24h)
       </div>
       <div className="flex gap-2 overflow-x-auto pb-2">
         {rows.map((r, i) => (
           <div
             key={i}
-            className="flex-none w-16 p-2 text-center flex flex-col items-center justify-center rounded-lg bg-gray-50 dark:bg-slate-800 text-xs"
+            className="flex-none w-20 p-2 text-center flex flex-col items-center justify-center rounded-lg border border-white/20 bg-black/20 text-xs"
           >
-            <div className="text-muted-foreground truncate w-full">
+            <div className="truncate w-full font-mono text-[0.62rem] uppercase tracking-[0.12em] opacity-75">
               {r.t.toLocaleTimeString([], {
                 hour: "numeric",
                 timeZone: timezone,
               })}
             </div>
-            <div className="font-semibold mt-1">
-              {r.temp == null ? "—" : tempDisplay(r.temp)}
+            <div className="font-semibold mt-1 text-sm">
+              {r.tempC == null ? "-" : tempCompact(r.tempC, unit)}
             </div>
           </div>
         ))}

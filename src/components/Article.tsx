@@ -3,6 +3,7 @@ type ArticleProps = {
   link?: string;
   pubDate?: string;
   source?: string;
+  featured?: boolean;
 };
 
 // Simple presentational article card used by News
@@ -11,17 +12,20 @@ export default function Article({
   link,
   pubDate,
   source,
+  featured = false,
 }: ArticleProps) {
   return (
-    <article className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-white dark:bg-slate-900 shadow-sm max-w-2xl">
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="text-lg font-semibold leading-snug">
+    <article className={`atmo-news-item ${featured ? "is-featured" : ""}`}>
+      <div className="flex items-start justify-between gap-3">
+        <h3
+          className={`leading-snug text-slate-50 ${featured ? "text-3xl sm:text-4xl" : "text-xl sm:text-2xl"}`}
+        >
           {link ? (
             <a
               href={link}
               target="_blank"
               rel="noreferrer"
-              className="hover:text-blue-600 underline"
+              className="hover:underline underline-offset-4 decoration-current"
             >
               {title}
             </a>
@@ -30,16 +34,20 @@ export default function Article({
           )}
         </h3>
         {source && (
-          <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 whitespace-nowrap">
-            {source}
-          </span>
+          <span className="atmo-kicker whitespace-nowrap">{source}</span>
         )}
       </div>
 
       {pubDate && (
-        <div className="text-xs text-muted-foreground mt-1">
+        <div className="mt-3 atmo-kicker opacity-80">
           {new Date(pubDate).toLocaleString()}
         </div>
+      )}
+
+      {featured && (
+        <p className="mt-4 text-sm sm:text-base leading-relaxed atmo-muted-copy">
+          A lead dispatch from the latest weather desk update.
+        </p>
       )}
     </article>
   );

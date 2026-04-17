@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { useGeolocation } from "@/hooks/useGeolocation";
 
 export default function UseMyLocationButton({
@@ -19,7 +18,7 @@ export default function UseMyLocationButton({
         });
         if (status.state === "denied") {
           alert(
-            "Location access was denied. Please enable it in your browser settings."
+            "Location access was denied. Please enable it in your browser settings.",
           );
           return;
         }
@@ -40,13 +39,14 @@ export default function UseMyLocationButton({
 
   return (
     <div>
-      <Button
+      <button
+        type="button"
         onClick={handleUseLocation}
         disabled={loading || disabled}
-        className="w-full h-11 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+        className="atmo-button w-full h-11 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Locating…" : "Use my location"}
-      </Button>
+      </button>
     </div>
   );
 }

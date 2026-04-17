@@ -1,48 +1,33 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useContext,
-  useMemo,
+import {
   lazy,
   Suspense,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import axios from "axios";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { TrashIcon } from "@/components/ui/TrashIcon";
-import Lottie from "lottie-react";
-import Tooltip from "@/components/ui/Tooltip";
-import { InfoIcon } from "@/components/ui/InfoIcon";
 import { LocationContext } from "@/contexts/LocationContext";
-import type { LottieRefCurrentProps } from "lottie-react";
-
-// Import Lottie animations
-import sunAnimation from "@/assets/lottie/sun.json";
-import cloudAnimation from "@/assets/lottie/cloud.json";
-import rainAnimation from "@/assets/lottie/rain.json";
-import stormAnimation from "@/assets/lottie/storm.json";
-import windAnimation from "@/assets/lottie/wind.json";
-import snowAnimation from "@/assets/lottie/snow.json";
-import rainWindAnimation from "@/assets/lottie/rain-wind.json";
-import { tempDisplay } from "@/lib/temperature";
+import { MOODS, moodFromCondition } from "@/components/atmosphere/moods";
+import { tempCompact } from "@/lib/temperature";
+import { useTheme } from "@/theme/useTheme";
 
 interface WeatherCardProps {
-  location: string; // e.g., "Austin,TX"
+  location: string;
   name: string;
   disableDelete?: boolean;
 }
 
 interface WeatherData {
-  temperature: number;
+  temperatureC: number;
   condition: string;
-  icon: string;
   windSpeed?: number;
   windGust?: number;
   windDirection?: number;
   humidity?: number;
-  feelsLike?: number;
+  feelsLikeC?: number;
   visibility?: number;
   pressureSurfaceLevel?: number;
   pressureSeaLevel?: number;
@@ -54,62 +39,78 @@ interface WeatherData {
 
 const HourlyForecast = lazy(() => import("@/components/HourlyForecast"));
 
-const WeatherCard: React.FC<WeatherCardProps> = ({
+function MetricTile({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: string;
+}) {
+  return (
+    <div
+      className="rounded-xl border px-3 py-2"
+      style={{ borderColor: tone, background: "rgba(8, 14, 22, 0.16)" }}
+    >
+      <p className="atmo-metric-label" style={{ color: tone }}>
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-light leading-tight">{value}</p>
+    </div>
+  );
+}
+
+function StatusOrb({ accent }: { accent: string }) {
+  return (
+    <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-white/15 bg-black/10 sm:h-28 sm:w-28">
+      <div
+        className="absolute inset-2 rounded-full blur-sm"
+        style={{ background: accent, opacity: 0.9 }}
+      />
+      <div
+        className="absolute inset-5 rounded-full border border-white/25"
+        style={{
+          boxShadow: `0 0 0 10px color-mix(in srgb, ${accent} 10%, transparent)`,
+        }}
+      />
+      <div className="relative text-center">
+        <div className="font-mono text-[0.58rem] uppercase tracking-[0.24em] text-white/80">
+          Signal
+        </div>
+        <div className="mt-1 text-2xl font-light leading-none">Live</div>
+      </div>
+    </div>
+  );
+}
+
+export default function WeatherCard({
   location,
   name,
   disableDelete = false,
-}) => {
+}: WeatherCardProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const locations = useContext(LocationContext);
-
-  const lottieRef = useRef<LottieRefCurrentProps>(null);
   const [editingName, setEditingName] = useState(false);
   const [customName, setCustomName] = useState(name || "");
   const [expanded, setExpanded] = useState(false);
   const [loadHourly, setLoadHourly] = useState(false);
-  const detailsWrapperRef = useRef<HTMLDivElement | null>(null);
-  const detailsContentRef = useRef<HTMLDivElement | null>(null);
   const [detailsMaxHeight, setDetailsMaxHeight] = useState(0);
-  const detailsId = useMemo(
-    () => `details-${(location || "").replace(/[^a-z0-9_-]+/gi, "-")}`,
-    [location]
-  );
+  const detailsContentRef = useRef<HTMLDivElement | null>(null);
+
+  const locations = useContext(LocationContext);
+  const { unit } = useTheme();
 
   const parts = (location || "").split(",").map((s) => s.trim());
   const latN = Number(parts[0]);
   const lonN = Number(parts[1]);
-  const valid = !Number.isNaN(latN) && !Number.isNaN(lonN);
+  const validCoords = !Number.isNaN(latN) && !Number.isNaN(lonN);
 
-  useEffect(() => {
-    // Measure details content whenever the details region is opened or
-    // when the hourly content is loaded. Use ResizeObserver when available
-    // to react to internal content changes (e.g. lazy-loaded children).
-    const content = detailsContentRef.current;
-    if (!content) return;
-
-    const update = () => {
-      const c = detailsContentRef.current;
-      if (c) setDetailsMaxHeight(c.scrollHeight);
-    };
-
-    // measure now if expanded
-    if (expanded) update();
-
-    let ro: ResizeObserver | null = null;
-    if (typeof (window as any).ResizeObserver !== "undefined") {
-      ro = new (window as any).ResizeObserver(() => update());
-      ro?.observe(content);
-    } else {
-      window.addEventListener("resize", update);
-    }
-
-    return () => {
-      if (ro) ro.disconnect();
-      else window.removeEventListener("resize", update);
-    };
-  }, [expanded, loadHourly]);
+  const detailsId = useMemo(
+    () => `details-${(location || "").replace(/[^a-z0-9_-]+/gi, "-")}`,
+    [location],
+  );
 
   const API_URL = import.meta.env.VITE_WEATHER_API_BASE_URL;
 
@@ -143,42 +144,6 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
     return codes[code] || "Unknown";
   };
 
-  const getConditionIcon = (code: number, windSpeed: number): string => {
-    if (code >= 4000 && code < 5000) {
-      if (windSpeed > 40) {
-        return "rain-wind";
-      } else {
-        return "rain";
-      }
-    }
-    if (code == 1000 || code == 1100) return "sun";
-    if (code >= 5000 && code < 8000) return "snow";
-    if (code === 8000) return "storm";
-    if (windSpeed > 40) {
-      return "wind;";
-    }
-    return "cloud";
-  };
-
-  const getAnimation = (icon: string) => {
-    switch (icon) {
-      case "sun":
-        return sunAnimation;
-      case "rain":
-        return rainAnimation;
-      case "storm":
-        return stormAnimation;
-      case "snow":
-        return snowAnimation;
-      case "wind":
-        return windAnimation;
-      case "rain-wind":
-        return rainWindAnimation;
-      default:
-        return cloudAnimation;
-    }
-  };
-
   const degreesToCardinal = (deg: number) => {
     const directions = [
       "N",
@@ -202,34 +167,80 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
     return directions[index];
   };
 
-  const detailDescriptions: Record<string, string> = {
-    feelsLike: "Perceived temperature accounting for wind and humidity.",
-    dewPoint: "Temperature at which air becomes saturated and dew forms.",
-    humidity: "Relative humidity as a percentage of water vapor in air.",
-    precipProb: "Chance of precipitation occurring during the period.",
-    wind: "Wind speed and gusts measured in meters per second.",
-    windDir: "Wind direction shown as compass and degrees.",
-    visibility: "Horizontal visibility distance (meters or kilometers).",
-    cloudCover: "Percentage of sky covered by clouds.",
-    pressure: "Atmospheric pressure at sea/surface level in hPa.",
-    altimeter: "Altimeter setting used by aircraft pilots (hPa).",
-  };
+  useEffect(() => {
+    async function loadWeather() {
+      setLoading(true);
+      setError(null);
+      try {
+        const url = `${API_URL}/api/weather?loc=${location}`;
+        const response = await axios.get(url);
+        const data = response.data.data.values;
+
+        const weatherInfo: WeatherData = {
+          temperatureC: data.temperature,
+          condition: getConditionLabel(data.weatherCode),
+          windSpeed: data.windSpeed,
+          windGust: data.windGust,
+          windDirection: data.windDirection,
+          humidity: data.humidity,
+          feelsLikeC: data.temperatureApparent ?? data.temperature,
+          visibility: data.visibility,
+          pressureSurfaceLevel: data.pressureSurfaceLevel,
+          pressureSeaLevel: data.pressureSeaLevel ?? data.pressureSurfaceLevel,
+          precipitationProbability: data.precipitationProbability,
+          cloudCover: data.cloudCover,
+          dewPoint: data.dewPoint,
+          altimeterSetting: data.altimeterSetting,
+        };
+
+        setWeather(weatherInfo);
+      } catch {
+        setError("Failed to fetch weather data.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadWeather();
+  }, [API_URL, location]);
+
+  useEffect(() => {
+    const content = detailsContentRef.current;
+    if (!content) return;
+
+    const update = () => {
+      const c = detailsContentRef.current;
+      if (c) setDetailsMaxHeight(c.scrollHeight);
+    };
+
+    if (expanded) update();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof window.ResizeObserver !== "undefined") {
+      ro = new window.ResizeObserver(() => update());
+      ro.observe(content);
+    } else {
+      window.addEventListener("resize", update);
+    }
+
+    return () => {
+      if (ro) ro.disconnect();
+      else window.removeEventListener("resize", update);
+    };
+  }, [expanded, loadHourly]);
 
   const handleDelete = () => {
-    // remove location from localstorage and update context
-    const newLocations = locations?.data.filter((loc) => {
-      return loc.location != location;
-    });
-
+    const newLocations = locations?.data.filter(
+      (loc) => loc.location !== location,
+    );
     localStorage.setItem("locations", JSON.stringify(newLocations));
-
-    if (newLocations != undefined) locations?.updateData(newLocations);
+    if (newLocations !== undefined) locations?.updateData(newLocations);
   };
 
   const handleSaveName = () => {
     setEditingName(false);
     const trimmedName = customName.trim().slice(0, 100);
-    // Update the location in the context with the new custom name
+
     if (locations) {
       const updatedLocations = locations.data.map((loc) => {
         if (loc.location === location) {
@@ -247,379 +258,291 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
     setEditingName(false);
   };
 
-  useEffect(() => {
-    async function loadWeather() {
-      setLoading(true);
-      setError(null);
-      try {
-        // const lat = 43.0755;
-        // const lon = 89.4155;
+  const mood = MOODS[moodFromCondition(weather?.condition || "cloudy")];
+  const displayName = customName || location;
+  const visibilityValue =
+    weather?.visibility !== undefined
+      ? weather.visibility > 1000
+        ? `${(weather.visibility / 1000).toFixed(1)} km`
+        : `${weather.visibility} km`
+      : "-";
+  const precipitationValue =
+    weather?.precipitationProbability !== undefined
+      ? `${Math.round(weather.precipitationProbability)}%`
+      : "-";
 
-        const url = `${API_URL}/api/weather?loc=${location}`;
-
-        const response = await axios.get(url);
-        const data = response.data.data.values;
-
-        const weatherInfo: WeatherData = {
-          temperature: data.temperature,
-          condition: getConditionLabel(data.weatherCode),
-          icon: getConditionIcon(data.weatherCode, data.windSpeed),
-          windSpeed: data.windSpeed,
-          windGust: data.windGust,
-          windDirection: data.windDirection,
-          humidity: data.humidity,
-          feelsLike: data.temperatureApparent ?? data.temperature,
-          visibility: data.visibility,
-          pressureSurfaceLevel: data.pressureSurfaceLevel,
-          pressureSeaLevel: data.pressureSeaLevel ?? data.pressureSurfaceLevel,
-          precipitationProbability: data.precipitationProbability,
-          cloudCover: data.cloudCover,
-          dewPoint: data.dewPoint,
-          altimeterSetting: data.altimeterSetting,
-        };
-
-        setWeather(weatherInfo);
-      } catch (err) {
-        setError("Failed to fetch weather data.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadWeather();
-  }, []);
   return (
-    <Card
-      className="w-full self-start shadow-lg rounded-2xl bg-gradient-to-br from-white/80 to-white/60 dark:from-[#0b1220]/80 dark:to-[#0b1220]/60 backdrop-blur-md border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-xl transition-shadow"
-      onMouseEnter={() => lottieRef.current?.play()}
-      onMouseLeave={() => lottieRef.current?.stop()}
+    <article
+      className="atmo-panel overflow-hidden"
+      style={{ background: mood.background, color: mood.text }}
     >
-      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3 border-b border-gray-200 dark:border-gray-700">
-        {editingName ? (
-          <div className="flex gap-2 flex-1 min-w-0">
-            <Input
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              placeholder="Enter custom name"
-              className="flex-1 min-w-0"
-            />
-            <Button
-              size="sm"
-              onClick={handleSaveName}
-              className="flex-shrink-0"
-            >
-              Save
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleCancelName}
-              className="flex-shrink-0"
-            >
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <>
-            <CardTitle
-              className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors flex items-center gap-2 group flex-1 min-w-0 "
-              onClick={() => setEditingName(true)}
-            >
-              <span className="line-clamp-3">
-                Weather in {customName ? customName : location}
-              </span>
-              <svg
-                className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-            </CardTitle>
-            {!disableDelete && (
-              <Button
-                variant="destructive"
-                size="icon"
-                onClick={handleDelete}
-                className="flex-shrink-0"
-              >
-                <span className="sr-only">Delete Card</span>{" "}
-                {/* Text for screen readers */}
-                <TrashIcon className="h-4 w-4"></TrashIcon>
-              </Button>
-            )}
-          </>
-        )}
-      </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center space-y-4 p-6 text-center">
-        {loading ? (
-          <p className="text-gray-500 animate-pulse">Loading...</p>
-        ) : error ? (
-          <p className="text-red-500 text-sm">{error}</p>
-        ) : weather ? (
-          <>
-            <Lottie
-              animationData={JSON.parse(
-                JSON.stringify(getAnimation(weather.icon))
-              )}
-              loop
-              autoplay={false}
-              lottieRef={lottieRef}
-              className="w-32 h-32"
-            />
-            <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-500">
-              {tempDisplay(weather.temperature)}
-            </p>
-            <p className="text-base text-gray-600 dark:text-gray-400 font-medium">
-              {weather.condition}
-            </p>
-          </>
-        ) : (
-          <p className="text-gray-400">No data available.</p>
-        )}
-      </CardContent>
-      <div className="border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => {
-            const next = !expanded;
-            setExpanded(next);
-            if (next) setLoadHourly(true);
-          }}
-          onMouseEnter={() => {
-            // warm HourlyForecast chunk so Suspense fallback is rarely visible
-            import("@/components/HourlyForecast");
-          }}
-          aria-expanded={expanded}
-          aria-controls={detailsId}
-          className="w-full px-6 py-3 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-        >
-          <span className="text-sm font-medium">
-            {expanded ? "Hide Details" : "Show Details"}
-          </span>
-          <svg
-            className={`w-4 h-4 transition-transform ${
-              expanded ? "rotate-180" : ""
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 14l-7 7m0 0l-7-7m7 7V3"
-            />
-          </svg>
-        </button>
+      <div className="relative z-10 p-4 sm:p-5">
         <div
-          ref={detailsWrapperRef}
-          id={detailsId}
-          role="region"
-          aria-label={`Details for ${customName ? customName : location}`}
-          style={{
-            maxHeight: expanded ? `${detailsMaxHeight}px` : "0px",
-            overflow: "hidden",
-            transition: "max-height 280ms ease",
-          }}
+          className="flex items-start justify-between gap-3 pb-3 border-b"
+          style={{ borderColor: mood.border }}
         >
-          <div
-            ref={detailsContentRef}
-            className="px-6 py-4 bg-black/2 dark:bg-white/5 space-y-3 border-t border-gray-200 dark:border-gray-700"
-          >
-            <div className="grid grid-cols-2 gap-3">
-              {weather && (
-                <>
-                  {weather.feelsLike !== undefined && (
-                    <div className="flex flex-col">
-                      <Tooltip content={detailDescriptions.feelsLike}>
-                        <>
-                          <span className="text-xs text-muted-foreground">
-                            Feels Like
-                          </span>
-                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
-                        </>
-                      </Tooltip>
-                      <span className="text-sm  ">
-                        {tempDisplay(weather.feelsLike)}
-                      </span>
-                    </div>
-                  )}
+          {editingName ? (
+            <div className="w-full space-y-2">
+              <input
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="Enter custom name"
+                className="atmo-input"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="atmo-button"
+                  onClick={handleSaveName}
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="atmo-button"
+                  onClick={handleCancelName}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="text-left"
+                onClick={() => setEditingName(true)}
+                style={{ color: mood.text }}
+              >
+                <p className="atmo-kicker">Weather dashboard</p>
+                <h3 className="text-2xl leading-tight font-light">
+                  {displayName}
+                </h3>
+                <p
+                  className="font-mono text-[0.62rem] uppercase tracking-[0.18em] mt-1"
+                  style={{ color: mood.muted }}
+                >
+                  Live station telemetry
+                </p>
+              </button>
 
-                  {weather.dewPoint !== undefined && (
-                    <div className="flex flex-col">
-                      <Tooltip content={detailDescriptions.dewPoint}>
-                        <>
-                          <span className="text-xs text-muted-foreground">
-                            Dew Point
-                          </span>
-                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
-                        </>
-                      </Tooltip>
-                      <span className="text-sm  ">
-                        {tempDisplay(weather.dewPoint)}
-                      </span>
-                    </div>
-                  )}
+              {!disableDelete && (
+                <button
+                  type="button"
+                  className="atmo-button px-3"
+                  onClick={handleDelete}
+                  aria-label="Delete card"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              )}
+            </>
+          )}
+        </div>
 
-                  {weather.humidity !== undefined && (
-                    <div className="flex flex-col">
-                      <Tooltip content={detailDescriptions.humidity}>
-                        <>
-                          <span className="text-xs text-muted-foreground">
-                            Humidity
-                          </span>
-                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
-                        </>
-                      </Tooltip>
-                      <span className="text-sm  ">{weather.humidity}%</span>
-                    </div>
-                  )}
-
-                  {weather.precipitationProbability !== undefined && (
-                    <div className="flex flex-col">
-                      <Tooltip content={detailDescriptions.precipProb}>
-                        <>
-                          <span className="text-xs text-muted-foreground">
-                            Precip. Prob.
-                          </span>
-                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
-                        </>
-                      </Tooltip>
-                      <span className="text-sm  ">
-                        {Math.round(weather.precipitationProbability)}%
-                      </span>
-                    </div>
-                  )}
-
-                  {(weather.windSpeed !== undefined ||
-                    weather.windGust !== undefined) && (
-                    <div className="flex flex-col">
-                      <Tooltip content={detailDescriptions.wind}>
-                        <>
-                          <span className="text-xs text-muted-foreground">
-                            Wind
-                          </span>
-                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
-                        </>
-                      </Tooltip>
-                      <span className="text-sm  ">
-                        {weather.windSpeed !== undefined
-                          ? `${weather.windSpeed.toFixed(1)} m/s`
-                          : "-"}
-                        {weather.windGust !== undefined
-                          ? ` · Gust ${weather.windGust.toFixed(1)} m/s`
+        <div className="pt-4 space-y-4">
+          {loading ? (
+            <p className="font-mono text-xs tracking-[0.22em] uppercase opacity-80">
+              Loading...
+            </p>
+          ) : error ? (
+            <p className="font-mono text-xs tracking-[0.16em] uppercase text-red-100">
+              {error}
+            </p>
+          ) : weather ? (
+            <>
+              <div className="grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+                <section
+                  className="rounded-2xl border p-4"
+                  style={{
+                    borderColor: mood.border,
+                    background: "rgba(8, 14, 22, 0.18)",
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p
+                        className="font-mono text-[0.58rem] uppercase tracking-[0.22em]"
+                        style={{ color: mood.muted }}
+                      >
+                        Current temperature
+                      </p>
+                      <div className="mt-2 flex items-end gap-2">
+                        <p className="text-6xl sm:text-7xl font-extralight leading-none tracking-tight">
+                          {tempCompact(weather.temperatureC, unit)}
+                        </p>
+                        <span
+                          className="mb-2 rounded-full border px-2 py-1 font-mono text-[0.58rem] uppercase tracking-[0.18em]"
+                          style={{ borderColor: mood.border }}
+                        >
+                          {weather.condition}
+                        </span>
+                      </div>
+                      <p
+                        className="mt-2 max-w-md text-sm leading-relaxed"
+                        style={{ color: mood.muted }}
+                      >
+                        Feels like{" "}
+                        {tempCompact(
+                          weather.feelsLikeC ?? weather.temperatureC,
+                          unit,
+                        )}
+                        .
+                        {weather.precipitationProbability !== undefined
+                          ? ` Precipitation chance is ${Math.round(weather.precipitationProbability)}%.`
                           : ""}
-                      </span>
+                      </p>
                     </div>
-                  )}
 
-                  {weather.windDirection !== undefined && (
-                    <div className="flex flex-col">
-                      <Tooltip content={detailDescriptions.windDir}>
-                        <>
-                          <span className="text-xs text-muted-foreground">
-                            Wind Dir.
-                          </span>
-                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
-                        </>
-                      </Tooltip>
-                      <span className="text-sm  ">
-                        {degreesToCardinal(weather.windDirection)} (
-                        {Math.round(weather.windDirection)}°)
-                      </span>
-                    </div>
-                  )}
+                    <StatusOrb accent={mood.accent} />
+                  </div>
 
-                  {weather.visibility !== undefined && (
-                    <div className="flex flex-col">
-                      <Tooltip content={detailDescriptions.visibility}>
-                        <>
-                          <span className="text-xs text-muted-foreground">
-                            Visibility
-                          </span>
-                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
-                        </>
-                      </Tooltip>
-                      <span className="text-sm  ">
-                        {weather.visibility > 1000
-                          ? `${(weather.visibility / 1000).toFixed(1)} km`
-                          : `${weather.visibility} km`}
-                      </span>
-                    </div>
-                  )}
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    <MetricTile
+                      label="Humidity"
+                      value={`${Math.round(weather.humidity ?? 0)}%`}
+                      tone={mood.muted}
+                    />
+                    <MetricTile
+                      label="Wind"
+                      value={
+                        weather.windSpeed !== undefined
+                          ? `${weather.windSpeed.toFixed(1)} m/s`
+                          : "-"
+                      }
+                      tone={mood.muted}
+                    />
+                    <MetricTile
+                      label="Visibility"
+                      value={visibilityValue}
+                      tone={mood.muted}
+                    />
+                    <MetricTile
+                      label="Precipitation"
+                      value={precipitationValue}
+                      tone={mood.muted}
+                    />
+                  </div>
+                </section>
 
-                  {weather.cloudCover !== undefined && (
-                    <div className="flex flex-col">
-                      <Tooltip content={detailDescriptions.cloudCover}>
-                        <>
-                          <span className="text-xs text-muted-foreground">
-                            Cloud Cover
-                          </span>
-                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
-                        </>
-                      </Tooltip>
-                      <span className="text-sm  ">
-                        {Math.round(weather.cloudCover)}%
-                      </span>
+                <section
+                  className="rounded-2xl border p-4"
+                  style={{
+                    borderColor: mood.border,
+                    background: "rgba(8, 14, 22, 0.14)",
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p
+                        className="font-mono text-[0.58rem] uppercase tracking-[0.22em]"
+                        style={{ color: mood.muted }}
+                      >
+                        Details
+                      </p>
+                      <p className="mt-1 text-sm" style={{ color: mood.muted }}>
+                        Direction, pressure, and station coordinates.
+                      </p>
                     </div>
-                  )}
+                  </div>
 
-                  {(weather.pressureSeaLevel ??
-                    weather.pressureSurfaceLevel) !== undefined && (
-                    <div className="flex flex-col">
-                      <Tooltip content={detailDescriptions.pressure}>
-                        <>
-                          <span className="text-xs text-muted-foreground">
-                            Pressure
-                          </span>
-                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
-                        </>
-                      </Tooltip>
-                      <span className="text-sm  ">
-                        {(weather.pressureSeaLevel ??
-                          weather.pressureSurfaceLevel)!.toFixed(0)}{" "}
-                        hPa
-                      </span>
+                  <div className="mt-4 grid gap-2">
+                    <MetricTile
+                      label="Wind direction"
+                      value={
+                        weather.windDirection !== undefined
+                          ? `${degreesToCardinal(weather.windDirection)} ${Math.round(weather.windDirection)}°`
+                          : "-"
+                      }
+                      tone={mood.muted}
+                    />
+                    <MetricTile
+                      label="Pressure"
+                      value={
+                        weather.pressureSeaLevel !== undefined
+                          ? `${Math.round(weather.pressureSeaLevel)} hPa`
+                          : "-"
+                      }
+                      tone={mood.muted}
+                    />
+                    <div
+                      className="rounded-xl border px-3 py-2"
+                      style={{
+                        borderColor: mood.border,
+                        background: "rgba(8, 14, 22, 0.12)",
+                      }}
+                    >
+                      <p
+                        className="atmo-metric-label"
+                        style={{ color: mood.muted }}
+                      >
+                        Station Coordinates
+                      </p>
+                      <p className="mt-1 font-mono text-sm leading-relaxed opacity-90">
+                        {location}
+                      </p>
                     </div>
-                  )}
+                  </div>
+                </section>
+              </div>
+            </>
+          ) : (
+            <p className="font-mono text-xs uppercase tracking-[0.16em] opacity-80">
+              No data available.
+            </p>
+          )}
+        </div>
 
-                  {weather.altimeterSetting !== undefined && (
-                    <div className="flex flex-col">
-                      <Tooltip content={detailDescriptions.altimeter}>
-                        <>
-                          <span className="text-xs text-muted-foreground">
-                            Altimeter
-                          </span>
-                          <InfoIcon className="ml-1 h-4 w-4 opacity-70" />
-                        </>
-                      </Tooltip>
-                      <span className="text-sm  ">
-                        {weather.altimeterSetting.toFixed(2)} hPa
-                      </span>
-                    </div>
-                  )}
-                </>
+        <div
+          className="mt-5 pt-4 border-t"
+          style={{ borderColor: mood.border }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              const next = !expanded;
+              setExpanded(next);
+              if (next) setLoadHourly(true);
+            }}
+            onMouseEnter={() => {
+              import("@/components/HourlyForecast");
+            }}
+            aria-expanded={expanded}
+            aria-controls={detailsId}
+            className="w-full flex items-center justify-between font-mono text-[0.64rem] tracking-[0.2em] uppercase"
+          >
+            <span>{expanded ? "Hide Hourly" : "Show Hourly"}</span>
+            <span
+              className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+            >
+              ▾
+            </span>
+          </button>
+
+          <div
+            id={detailsId}
+            role="region"
+            aria-label={`Details for ${displayName}`}
+            style={{
+              maxHeight: expanded ? `${detailsMaxHeight}px` : "0px",
+              overflow: "hidden",
+              transition: "max-height 280ms ease",
+            }}
+          >
+            <div ref={detailsContentRef} className="pt-3">
+              {validCoords && loadHourly && (
+                <Suspense
+                  fallback={
+                    <div className="py-2">Loading hourly forecast...</div>
+                  }
+                >
+                  <HourlyForecast lat={latN} lon={lonN} />
+                </Suspense>
               )}
             </div>
-            {valid && loadHourly && (
-              <Suspense
-                fallback={<div className="py-2">Loading hourly forecast…</div>}
-              >
-                <HourlyForecast lat={latN} lon={lonN} />
-              </Suspense>
-            )}
           </div>
         </div>
       </div>
-    </Card>
+    </article>
   );
-};
-
-export default WeatherCard;
+}
