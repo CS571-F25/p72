@@ -1,199 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import LocationTabs from "@/components/LocationTabs";
 import AtmosphereLayers from "@/components/atmosphere/AtmosphereLayers";
 import { MOODS, moodFromCondition } from "@/components/atmosphere/moods";
 import { useTheme } from "@/theme/useTheme";
-
-const INITIAL_LOCATIONS: AtmoLocation[] = [
-  {
-    id: "lis",
-    city: "Lisbon",
-    region: "Portugal",
-    country: "PT",
-    tz: "WEST",
-    localTime: "14:32",
-    lat: 38.72,
-    lon: -9.14,
-    condition: "clear",
-    conditionLabel: "Clear sky",
-    tempF: 74,
-    tempC: 23,
-    feelsF: 76,
-    feelsC: 24,
-    highF: 78,
-    highC: 26,
-    lowF: 61,
-    lowC: 16,
-    humidity: 48,
-    wind: { speedMph: 9, speedKph: 14, dir: "NW", deg: 315 },
-    pressure: 1021,
-    visibility: 16,
-    uv: 7,
-    sunrise: "06:51",
-    sunset: "20:18",
-    precip: 0,
-    dewF: 54,
-    hourly: [
-      { t: "14", tF: 74, tC: 23, cond: "clear", pop: 0 },
-      { t: "15", tF: 76, tC: 24, cond: "clear", pop: 0 },
-      { t: "16", tF: 77, tC: 25, cond: "clear", pop: 0 },
-      { t: "17", tF: 78, tC: 26, cond: "clear", pop: 0 },
-      { t: "18", tF: 76, tC: 24, cond: "fewclouds", pop: 5 },
-      { t: "19", tF: 73, tC: 23, cond: "fewclouds", pop: 5 },
-      { t: "20", tF: 70, tC: 21, cond: "fewclouds", pop: 0 },
-      { t: "21", tF: 67, tC: 19, cond: "clear", pop: 0 },
-      { t: "22", tF: 65, tC: 18, cond: "clear", pop: 0 },
-      { t: "23", tF: 63, tC: 17, cond: "clear", pop: 0 },
-      { t: "00", tF: 62, tC: 17, cond: "clear", pop: 0 },
-      { t: "01", tF: 61, tC: 16, cond: "clear", pop: 0 },
-    ],
-    daily: [
-      { d: "Today", cond: "clear", hiF: 78, hiC: 26, loF: 61, loC: 16, pop: 0 },
-      { d: "Sat", cond: "clear", hiF: 80, hiC: 27, loF: 63, loC: 17, pop: 0 },
-      {
-        d: "Sun",
-        cond: "fewclouds",
-        hiF: 77,
-        hiC: 25,
-        loF: 62,
-        loC: 17,
-        pop: 10,
-      },
-      {
-        d: "Mon",
-        cond: "fewclouds",
-        hiF: 74,
-        hiC: 23,
-        loF: 60,
-        loC: 16,
-        pop: 20,
-      },
-      { d: "Tue", cond: "rain", hiF: 68, hiC: 20, loF: 58, loC: 14, pop: 70 },
-      { d: "Wed", cond: "rain", hiF: 66, hiC: 19, loF: 57, loC: 14, pop: 65 },
-      { d: "Thu", cond: "clear", hiF: 72, hiC: 22, loF: 58, loC: 14, pop: 10 },
-    ],
-  },
-  {
-    id: "edi",
-    city: "Edinburgh",
-    region: "Scotland",
-    country: "UK",
-    tz: "BST",
-    localTime: "14:32",
-    lat: 55.95,
-    lon: -3.19,
-    condition: "rain",
-    conditionLabel: "Steady rain",
-    tempF: 52,
-    tempC: 11,
-    feelsF: 48,
-    feelsC: 9,
-    highF: 55,
-    highC: 13,
-    lowF: 44,
-    lowC: 7,
-    humidity: 88,
-    wind: { speedMph: 18, speedKph: 29, dir: "SW", deg: 225 },
-    pressure: 998,
-    visibility: 6,
-    uv: 2,
-    sunrise: "05:48",
-    sunset: "21:33",
-    precip: 0.42,
-    dewF: 48,
-    hourly: [
-      { t: "14", tF: 52, tC: 11, cond: "rain", pop: 85 },
-      { t: "15", tF: 52, tC: 11, cond: "rain", pop: 90 },
-      { t: "16", tF: 51, tC: 11, cond: "rain", pop: 95 },
-      { t: "17", tF: 51, tC: 11, cond: "rain", pop: 85 },
-      { t: "18", tF: 50, tC: 10, cond: "drizzle", pop: 60 },
-      { t: "19", tF: 50, tC: 10, cond: "drizzle", pop: 55 },
-      { t: "20", tF: 49, tC: 9, cond: "cloudy", pop: 30 },
-      { t: "21", tF: 48, tC: 9, cond: "cloudy", pop: 20 },
-      { t: "22", tF: 47, tC: 8, cond: "cloudy", pop: 15 },
-      { t: "23", tF: 46, tC: 8, cond: "cloudy", pop: 10 },
-      { t: "00", tF: 45, tC: 7, cond: "cloudy", pop: 5 },
-      { t: "01", tF: 44, tC: 7, cond: "cloudy", pop: 5 },
-    ],
-    daily: [
-      { d: "Today", cond: "rain", hiF: 55, hiC: 13, loF: 44, loC: 7, pop: 90 },
-      { d: "Sat", cond: "rain", hiF: 54, hiC: 12, loF: 43, loC: 6, pop: 80 },
-      { d: "Sun", cond: "cloudy", hiF: 56, hiC: 13, loF: 45, loC: 7, pop: 40 },
-      {
-        d: "Mon",
-        cond: "fewclouds",
-        hiF: 58,
-        hiC: 14,
-        loF: 46,
-        loC: 8,
-        pop: 20,
-      },
-      { d: "Tue", cond: "cloudy", hiF: 57, hiC: 14, loF: 46, loC: 8, pop: 30 },
-      { d: "Wed", cond: "rain", hiF: 53, hiC: 12, loF: 44, loC: 7, pop: 70 },
-      { d: "Thu", cond: "rain", hiF: 51, hiC: 11, loF: 42, loC: 6, pop: 85 },
-    ],
-  },
-  {
-    id: "rej",
-    city: "Reykjavík",
-    region: "Iceland",
-    country: "IS",
-    tz: "GMT",
-    localTime: "13:32",
-    lat: 64.15,
-    lon: -21.94,
-    condition: "snow",
-    conditionLabel: "Light snow",
-    tempF: 28,
-    tempC: -2,
-    feelsF: 19,
-    feelsC: -7,
-    highF: 31,
-    highC: -1,
-    lowF: 22,
-    lowC: -6,
-    humidity: 76,
-    wind: { speedMph: 22, speedKph: 35, dir: "N", deg: 0 },
-    pressure: 1008,
-    visibility: 3,
-    uv: 1,
-    sunrise: "07:12",
-    sunset: "18:44",
-    precip: 0.18,
-    dewF: 22,
-    hourly: [
-      { t: "13", tF: 28, tC: -2, cond: "snow", pop: 80 },
-      { t: "14", tF: 28, tC: -2, cond: "snow", pop: 85 },
-      { t: "15", tF: 27, tC: -3, cond: "snow", pop: 90 },
-      { t: "16", tF: 27, tC: -3, cond: "snow", pop: 85 },
-      { t: "17", tF: 26, tC: -3, cond: "snow", pop: 75 },
-      { t: "18", tF: 25, tC: -4, cond: "snow", pop: 60 },
-      { t: "19", tF: 24, tC: -4, cond: "cloudy", pop: 30 },
-      { t: "20", tF: 23, tC: -5, cond: "cloudy", pop: 20 },
-      { t: "21", tF: 22, tC: -6, cond: "cloudy", pop: 15 },
-      { t: "22", tF: 22, tC: -6, cond: "fewclouds", pop: 10 },
-      { t: "23", tF: 21, tC: -6, cond: "fewclouds", pop: 5 },
-      { t: "00", tF: 21, tC: -6, cond: "fewclouds", pop: 0 },
-    ],
-    daily: [
-      { d: "Today", cond: "snow", hiF: 31, hiC: -1, loF: 22, loC: -6, pop: 85 },
-      { d: "Sat", cond: "snow", hiF: 29, hiC: -2, loF: 20, loC: -7, pop: 75 },
-      { d: "Sun", cond: "cloudy", hiF: 33, hiC: 1, loF: 24, loC: -4, pop: 30 },
-      { d: "Mon", cond: "clear", hiF: 35, hiC: 2, loF: 25, loC: -4, pop: 10 },
-      {
-        d: "Tue",
-        cond: "fewclouds",
-        hiF: 34,
-        hiC: 1,
-        loF: 24,
-        loC: -4,
-        pop: 15,
-      },
-      { d: "Wed", cond: "snow", hiF: 30, hiC: -1, loF: 21, loC: -6, pop: 70 },
-      { d: "Thu", cond: "snow", hiF: 28, hiC: -2, loF: 19, loC: -7, pop: 80 },
-    ],
-  },
-];
 
 type AtmoCondition =
   | "clear"
@@ -203,54 +13,44 @@ type AtmoCondition =
   | "cloudy"
   | "fewclouds";
 
-type Hourly = {
+type StoredLocation = {
+  id: string;
+  city: string;
+  region: string;
+  lat: number;
+  lon: number;
+};
+
+type HourlyPoint = {
   t: string;
-  tF: number;
-  tC: number;
+  tempC: number;
   cond: AtmoCondition;
   pop: number;
 };
 
-type Daily = {
+type DailyPoint = {
   d: string;
   cond: AtmoCondition;
-  hiF: number;
   hiC: number;
-  loF: number;
   loC: number;
   pop: number;
 };
 
-type AtmoLocation = {
-  id: string;
-  city: string;
-  region: string;
-  country: string;
-  tz: string;
+type LiveWeather = {
   localTime: string;
-  lat: number;
-  lon: number;
   condition: AtmoCondition;
   conditionLabel: string;
-  tempF: number;
   tempC: number;
-  feelsF: number;
   feelsC: number;
-  highF: number;
   highC: number;
-  lowF: number;
   lowC: number;
   humidity: number;
-  wind: { speedMph: number; speedKph: number; dir: string; deg: number };
+  windSpeedKph: number;
+  windDir: string;
   pressure: number;
-  visibility: number;
   uv: number;
-  sunrise: string;
-  sunset: string;
-  precip: number;
-  dewF: number;
-  hourly: Hourly[];
-  daily: Daily[];
+  hourly: HourlyPoint[];
+  daily: DailyPoint[];
 };
 
 type LocationInput = {
@@ -260,7 +60,29 @@ type LocationInput = {
   name?: string;
 };
 
+type ForecastInterval = {
+  startTime: string;
+  values?: Record<string, number | string | null | undefined>;
+};
+
 const STORAGE_KEY = "atmo-locations";
+const DEFAULT_LOCATIONS: StoredLocation[] = [
+  { id: "lis", city: "Lisbon", region: "Portugal", lat: 38.72, lon: -9.14 },
+  {
+    id: "edi",
+    city: "Edinburgh",
+    region: "Scotland",
+    lat: 55.95,
+    lon: -3.19,
+  },
+  {
+    id: "rej",
+    city: "Reykjavik",
+    region: "Iceland",
+    lat: 64.15,
+    lon: -21.94,
+  },
+];
 
 const shellStyle = {
   minHeight: "100vh",
@@ -495,80 +317,300 @@ const addCircleStyle = {
   fontFamily: '"Fraunces", serif',
 };
 
-function pickTemplate(lat: number, lon: number) {
-  if (lat > 50 || lon < -10) return INITIAL_LOCATIONS[2];
-  if (lat > 20 || lon > 20) return INITIAL_LOCATIONS[0];
-  if (lat < -20 || lon < 0) return INITIAL_LOCATIONS[1];
-  return INITIAL_LOCATIONS[1];
-}
+const cToF = (c: number) => Math.round((c * 9) / 5 + 32);
+const kphToMph = (kph: number) => Math.round(kph * 0.621371);
 
-function synthesizeLocation(
-  data: LocationInput,
-  sequence: number,
-): AtmoLocation {
-  const template = pickTemplate(data.lat, data.lon);
-  return {
-    ...template,
-    id: `loc-${sequence}-${Math.random().toString(36).slice(2, 5)}`,
-    city: data.name || `${data.lat.toFixed(2)}, ${data.lon.toFixed(2)}`,
-    region: "Custom",
-    country: "--",
-    lat: data.lat,
-    lon: data.lon,
-    localTime: template.localTime,
+const toNumberOr = (value: unknown, fallback = 0) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return fallback;
+};
+
+const toHourLabel = (isoTime: string) => {
+  const d = new Date(isoTime);
+  return Number.isNaN(d.getTime())
+    ? "--"
+    : d.toLocaleTimeString([], { hour: "2-digit" });
+};
+
+const toClock = (isoTime: string) => {
+  const d = new Date(isoTime);
+  return Number.isNaN(d.getTime())
+    ? "--:--"
+    : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+const toWindDir = (deg: number) => {
+  const directions = [
+    "N",
+    "NNE",
+    "NE",
+    "ENE",
+    "E",
+    "ESE",
+    "SE",
+    "SSE",
+    "S",
+    "SSW",
+    "SW",
+    "WSW",
+    "W",
+    "WNW",
+    "NW",
+    "NNW",
+  ];
+  const index = Math.round((((deg % 360) + 360) % 360) / 22.5) % 16;
+  return directions[index];
+};
+
+const toCondition = (weatherCode: number): AtmoCondition => {
+  if (weatherCode >= 5000 && weatherCode < 6000) return "snow";
+  if (weatherCode === 4000 || weatherCode === 4200) return "drizzle";
+  if (
+    weatherCode === 4001 ||
+    weatherCode === 4201 ||
+    weatherCode === 6001 ||
+    weatherCode === 6201 ||
+    weatherCode === 8000
+  )
+    return "rain";
+  if (weatherCode === 1101 || weatherCode === 1102) return "fewclouds";
+  if (weatherCode === 1001 || weatherCode === 1100 || weatherCode === 2000)
+    return "cloudy";
+  return "clear";
+};
+
+const toConditionLabel = (code: number): string => {
+  const codes: Record<number, string> = {
+    1000: "Clear, Sunny",
+    1100: "Mostly Clear",
+    1101: "Partly Cloudy",
+    1102: "Mostly Cloudy",
+    1001: "Cloudy",
+    2000: "Fog",
+    2100: "Light Fog",
+    4000: "Drizzle",
+    4001: "Rain",
+    4200: "Light Rain",
+    4201: "Heavy Rain",
+    5000: "Snow",
+    5001: "Flurries",
+    5100: "Light Snow",
+    5101: "Heavy Snow",
+    6000: "Freezing Drizzle",
+    6001: "Freezing Rain",
+    6200: "Light Freezing Rain",
+    6201: "Heavy Freezing Rain",
+    7000: "Ice Pellets",
+    7101: "Heavy Ice Pellets",
+    7102: "Light Ice Pellets",
+    8000: "Thunderstorm",
   };
-}
+  return codes[code] || "Unknown";
+};
 
-function getInitialLocations(): AtmoLocation[] {
-  if (typeof window === "undefined") return INITIAL_LOCATIONS;
+function getInitialLocations(): StoredLocation[] {
+  if (typeof window === "undefined") return DEFAULT_LOCATIONS;
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return INITIAL_LOCATIONS;
-    const parsed = JSON.parse(stored) as AtmoLocation[];
-    return Array.isArray(parsed) && parsed.length ? parsed : INITIAL_LOCATIONS;
+    if (!stored) return DEFAULT_LOCATIONS;
+    const parsed = JSON.parse(stored) as StoredLocation[];
+    return Array.isArray(parsed) && parsed.length ? parsed : DEFAULT_LOCATIONS;
   } catch {
-    return INITIAL_LOCATIONS;
+    return DEFAULT_LOCATIONS;
   }
 }
 
-function forecastHourLabel(time: string) {
-  return time.toLowerCase();
+function buildDaily(intervals: ForecastInterval[]): DailyPoint[] {
+  const grouped = new Map<
+    string,
+    { temps: number[]; pops: number[]; conds: AtmoCondition[] }
+  >();
+
+  for (const interval of intervals) {
+    const dayKey = interval.startTime.slice(0, 10);
+    const values = interval.values || {};
+    const temp = toNumberOr(values.temperature, NaN);
+    if (!Number.isFinite(temp)) continue;
+    const pop = toNumberOr(values.precipitationProbability, 0);
+    const code = toNumberOr(values.weatherCode, 1000);
+    const cond = toCondition(code);
+
+    const bucket = grouped.get(dayKey) || { temps: [], pops: [], conds: [] };
+    bucket.temps.push(temp);
+    bucket.pops.push(pop);
+    bucket.conds.push(cond);
+    grouped.set(dayKey, bucket);
+  }
+
+  const keys = Array.from(grouped.keys()).sort();
+  return keys.slice(0, 7).map((key, index) => {
+    const bucket = grouped.get(key)!;
+    const hiC = Math.max(...bucket.temps);
+    const loC = Math.min(...bucket.temps);
+    const pop = Math.max(...bucket.pops, 0);
+
+    const condCount: Record<AtmoCondition, number> = {
+      clear: 0,
+      cloudy: 0,
+      fewclouds: 0,
+      drizzle: 0,
+      rain: 0,
+      snow: 0,
+    };
+    bucket.conds.forEach((c) => {
+      condCount[c] += 1;
+    });
+    const cond = (Object.entries(condCount).sort(
+      (a, b) => b[1] - a[1],
+    )[0]?.[0] || "clear") as AtmoCondition;
+
+    const date = new Date(`${key}T00:00:00`);
+    const d =
+      index === 0 ? "Today" : date.toLocaleDateString([], { weekday: "short" });
+
+    return {
+      d,
+      cond,
+      hiC: Math.round(hiC),
+      loC: Math.round(loC),
+      pop: Math.round(pop),
+    };
+  });
+}
+
+function buildHourly(intervals: ForecastInterval[]): HourlyPoint[] {
+  const now = Date.now();
+  const next = intervals
+    .filter((item) => new Date(item.startTime).getTime() >= now)
+    .slice(0, 12);
+
+  return next.map((item) => {
+    const values = item.values || {};
+    const tempC = Math.round(toNumberOr(values.temperature, 0));
+    const pop = Math.round(toNumberOr(values.precipitationProbability, 0));
+    const cond = toCondition(toNumberOr(values.weatherCode, 1000));
+
+    return {
+      t: toHourLabel(item.startTime),
+      tempC,
+      cond,
+      pop,
+    };
+  });
+}
+
+async function fetchLiveWeather(
+  baseUrl: string,
+  loc: StoredLocation,
+): Promise<LiveWeather> {
+  const location = `${loc.lat},${loc.lon}`;
+  const weatherEndpoint = `${baseUrl}/api/weather?loc=${location}`;
+  const forecastEndpoint = `${baseUrl}/api/weather-forecast?location=${location}`;
+
+  const [weatherRes, forecastRes] = await Promise.all([
+    axios.get(weatherEndpoint),
+    axios.get(forecastEndpoint),
+  ]);
+
+  const weatherData = weatherRes.data?.data || {};
+  const weatherValues = weatherData.values || {};
+
+  const intervals: ForecastInterval[] =
+    forecastRes.data?.data?.timelines?.[0]?.intervals ||
+    forecastRes.data?.timelines?.[0]?.intervals ||
+    forecastRes.data?.data?.intervals ||
+    forecastRes.data?.intervals ||
+    [];
+
+  const hourly = buildHourly(intervals);
+  const daily = buildDaily(intervals);
+
+  const currentTempC = Math.round(toNumberOr(weatherValues.temperature, 0));
+  const currentFeelsC = Math.round(
+    toNumberOr(weatherValues.temperatureApparent, currentTempC),
+  );
+  const weatherCode = toNumberOr(weatherValues.weatherCode, 1000);
+
+  const day0 = daily[0];
+
+  return {
+    localTime: toClock(
+      weatherData.time || intervals[0]?.startTime || new Date().toISOString(),
+    ),
+    condition: toCondition(weatherCode),
+    conditionLabel: toConditionLabel(weatherCode),
+    tempC: currentTempC,
+    feelsC: currentFeelsC,
+    highC: day0 ? day0.hiC : currentTempC,
+    lowC: day0 ? day0.loC : currentTempC,
+    humidity: Math.round(toNumberOr(weatherValues.humidity, 0)),
+    windSpeedKph: Math.round(toNumberOr(weatherValues.windSpeed, 0)),
+    windDir: toWindDir(toNumberOr(weatherValues.windDirection, 0)),
+    pressure: Math.round(toNumberOr(weatherValues.pressureSurfaceLevel, 0)),
+    uv: Math.round(toNumberOr(weatherValues.uvIndex, 0)),
+    hourly,
+    daily,
+  };
+}
+
+function ForecastIcon({ cond }: { cond: AtmoCondition }) {
+  if (cond === "snow") return <span>*</span>;
+  if (cond === "rain" || cond === "drizzle") return <span>|</span>;
+  if (cond === "clear") return <span>o</span>;
+  return <span>~</span>;
 }
 
 function WeatherPanel({
   location,
+  live,
   unit,
+  loading,
+  error,
   index,
   total,
   onRemove,
   onMoveLeft,
   onMoveRight,
 }: {
-  location: AtmoLocation;
+  location: StoredLocation;
+  live?: LiveWeather;
   unit: "C" | "F";
+  loading: boolean;
+  error?: string;
   index: number;
   total: number;
   onRemove: () => void;
   onMoveLeft: () => void;
   onMoveRight: () => void;
 }) {
-  const mood = MOODS[moodFromCondition(location.condition)];
-  const darkText = location.condition === "snow";
+  const condition = live?.condition || "cloudy";
+  const mood = MOODS[moodFromCondition(condition)];
+  const darkText = condition === "snow";
   const textColor = darkText ? "#1a2030" : "#fff";
   const mutedColor = darkText ? "rgba(26,32,48,0.7)" : "rgba(255,255,255,0.75)";
   const borderColor = darkText ? "rgba(26,32,48,0.2)" : "rgba(255,255,255,0.2)";
 
-  const temp = unit === "F" ? location.tempF : location.tempC;
-  const feels = unit === "F" ? location.feelsF : location.feelsC;
-  const hi = unit === "F" ? location.highF : location.highC;
-  const lo = unit === "F" ? location.lowF : location.lowC;
-  const wind = unit === "F" ? location.wind.speedMph : location.wind.speedKph;
+  const tempC = live?.tempC ?? 0;
+  const feelsC = live?.feelsC ?? 0;
+  const hiC = live?.highC ?? 0;
+  const loC = live?.lowC ?? 0;
+  const temp = unit === "F" ? cToF(tempC) : tempC;
+  const feels = unit === "F" ? cToF(feelsC) : feelsC;
+  const hi = unit === "F" ? cToF(hiC) : hiC;
+  const lo = unit === "F" ? cToF(loC) : loC;
+
+  const wind = live?.windSpeedKph ?? 0;
+  const windDisplay = unit === "F" ? kphToMph(wind) : wind;
   const windUnit = unit === "F" ? "mph" : "kph";
-  const allTemps = location.daily.flatMap((d) =>
-    unit === "F" ? [d.hiF, d.loF] : [d.hiC, d.loC],
-  );
-  const globalMin = Math.min(...allTemps) - 1;
-  const globalMax = Math.max(...allTemps) + 1;
+
+  const dailyRows = live?.daily || [];
+  const allTempsC = dailyRows.flatMap((d) => [d.hiC, d.loC]);
+  const globalMinC = allTempsC.length ? Math.min(...allTempsC) - 1 : 0;
+  const globalMaxC = allTempsC.length ? Math.max(...allTempsC) + 1 : 1;
 
   return (
     <div
@@ -578,7 +620,7 @@ function WeatherPanel({
         color: textColor,
       }}
     >
-      <AtmosphereLayers condition={location.condition} />
+      <AtmosphereLayers condition={condition} />
 
       <div
         style={{
@@ -590,125 +632,134 @@ function WeatherPanel({
         }}
       >
         <div style={{ ...cityRegionStyle, opacity: darkText ? 0.6 : 0.7 }}>
-          № {String(index + 1).padStart(2, "0")} · {location.tz}{" "}
-          {location.localTime}
+          #{String(index + 1).padStart(2, "0")} {live?.localTime || "--:--"}
         </div>
         <div style={cityNameStyle}>{location.city}</div>
         <div style={{ ...cityRegionStyle, marginBottom: 24 }}>
           {location.region}
         </div>
 
-        <div style={bigTempStyle}>
-          {temp}
-          <span style={degSymbolStyle}>°{unit}</span>
-        </div>
-        <div style={conditionStyle}>{location.conditionLabel}</div>
-        <div style={{ ...hiLoStyle, color: mutedColor }}>
-          H {hi}° · L {lo}° · Feels {feels}°
-        </div>
-
-        <div style={spacerStyle} />
-
-        <div style={{ ...hourlyStripStyle, borderColor }}>
-          {location.hourly.slice(0, 6).map((hour, hourIndex) => (
-            <div key={hourIndex} style={hourCellStyle}>
-              <div style={{ ...hourTStyle, color: mutedColor }}>
-                {forecastHourLabel(hour.t)}
-              </div>
-              <div style={{ fontSize: 16, lineHeight: 1 }}>
-                {hour.cond === "snow"
-                  ? "•"
-                  : hour.cond === "rain" || hour.cond === "drizzle"
-                    ? "∴"
-                    : hour.cond === "clear"
-                      ? "◔"
-                      : "◌"}
-              </div>
-              <div style={hourTempStyle}>
-                {unit === "F" ? hour.tF : hour.tC}°
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div style={readingsGridStyle}>
-          <div>
-            <div style={{ ...readLblStyle, color: mutedColor }}>Wind</div>
-            <div style={readValStyle}>
-              {wind}
-              <span style={readValSmStyle}>
-                {windUnit} {location.wind.dir}
-              </span>
-            </div>
+        {loading && !live ? (
+          <div style={{ ...conditionStyle, marginTop: 0 }}>
+            Loading live weather...
           </div>
-          <div>
-            <div style={{ ...readLblStyle, color: mutedColor }}>Humidity</div>
-            <div style={readValStyle}>
-              {location.humidity}
-              <span style={readValSmStyle}>%</span>
-            </div>
+        ) : error && !live ? (
+          <div style={{ ...conditionStyle, marginTop: 0 }}>
+            Weather unavailable
           </div>
-          <div>
-            <div style={{ ...readLblStyle, color: mutedColor }}>Pressure</div>
-            <div style={readValStyle}>
-              {location.pressure}
-              <span style={readValSmStyle}>hPa</span>
+        ) : (
+          <>
+            <div style={bigTempStyle}>
+              {temp}
+              <span style={degSymbolStyle}>deg {unit}</span>
             </div>
-          </div>
-          <div>
-            <div style={{ ...readLblStyle, color: mutedColor }}>UV</div>
-            <div style={readValStyle}>
-              {location.uv}
-              <span style={readValSmStyle}>/11</span>
+            <div style={conditionStyle}>
+              {live?.conditionLabel || "Unknown"}
             </div>
-          </div>
-        </div>
+            <div style={{ ...hiLoStyle, color: mutedColor }}>
+              H {hi} deg L {lo} deg Feels {feels} deg
+            </div>
 
-        <div style={{ ...dailyListStyle, borderColor }}>
-          {location.daily.map((day, dayIndex) => {
-            const dhi = unit === "F" ? day.hiF : day.hiC;
-            const dlo = unit === "F" ? day.loF : day.loC;
-            const left = ((dlo - globalMin) / (globalMax - globalMin)) * 100;
-            const right = ((dhi - globalMin) / (globalMax - globalMin)) * 100;
-            return (
-              <div key={dayIndex} style={dailyRowStyle}>
-                <span style={dailyDayStyle}>{day.d}</span>
-                <span>
-                  {day.cond === "snow"
-                    ? "•"
-                    : day.cond === "rain" || day.cond === "drizzle"
-                      ? "∴"
-                      : day.cond === "clear"
-                        ? "◔"
-                        : "◌"}
-                </span>
-                <div
-                  style={{
-                    ...dailyBarStyle,
-                    background: darkText
-                      ? "rgba(26,32,48,0.15)"
-                      : "rgba(255,255,255,0.2)",
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      bottom: 0,
-                      left: `${left}%`,
-                      width: `${right - left}%`,
-                      background: textColor,
-                      opacity: 0.85,
-                    }}
-                  />
+            <div style={spacerStyle} />
+
+            <div style={{ ...hourlyStripStyle, borderColor }}>
+              {(live?.hourly || []).slice(0, 6).map((hour, hourIndex) => (
+                <div key={hourIndex} style={hourCellStyle}>
+                  <div style={{ ...hourTStyle, color: mutedColor }}>
+                    {hour.t}
+                  </div>
+                  <div style={{ fontSize: 16, lineHeight: 1 }}>
+                    <ForecastIcon cond={hour.cond} />
+                  </div>
+                  <div style={hourTempStyle}>
+                    {unit === "F" ? cToF(hour.tempC) : hour.tempC} deg
+                  </div>
                 </div>
-                <span style={dailyHiLoStyle}>
-                  {dhi}° / {dlo}°
-                </span>
+              ))}
+            </div>
+
+            <div style={readingsGridStyle}>
+              <div>
+                <div style={{ ...readLblStyle, color: mutedColor }}>Wind</div>
+                <div style={readValStyle}>
+                  {windDisplay}
+                  <span style={readValSmStyle}>
+                    {windUnit} {live?.windDir || "N"}
+                  </span>
+                </div>
               </div>
-            );
-          })}
-        </div>
+              <div>
+                <div style={{ ...readLblStyle, color: mutedColor }}>
+                  Humidity
+                </div>
+                <div style={readValStyle}>
+                  {live?.humidity ?? 0}
+                  <span style={readValSmStyle}>%</span>
+                </div>
+              </div>
+              <div>
+                <div style={{ ...readLblStyle, color: mutedColor }}>
+                  Pressure
+                </div>
+                <div style={readValStyle}>
+                  {live?.pressure ?? 0}
+                  <span style={readValSmStyle}>hPa</span>
+                </div>
+              </div>
+              <div>
+                <div style={{ ...readLblStyle, color: mutedColor }}>UV</div>
+                <div style={readValStyle}>
+                  {live?.uv ?? 0}
+                  <span style={readValSmStyle}>/11</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ ...dailyListStyle, borderColor }}>
+              {dailyRows.map((day, dayIndex) => {
+                const dhi = unit === "F" ? cToF(day.hiC) : day.hiC;
+                const dlo = unit === "F" ? cToF(day.loC) : day.loC;
+                const scaleMin = unit === "F" ? cToF(globalMinC) : globalMinC;
+                const scaleMax = unit === "F" ? cToF(globalMaxC) : globalMaxC;
+                const left =
+                  ((dlo - scaleMin) / (scaleMax - scaleMin || 1)) * 100;
+                const right =
+                  ((dhi - scaleMin) / (scaleMax - scaleMin || 1)) * 100;
+                return (
+                  <div key={dayIndex} style={dailyRowStyle}>
+                    <span style={dailyDayStyle}>{day.d}</span>
+                    <span>
+                      <ForecastIcon cond={day.cond} />
+                    </span>
+                    <div
+                      style={{
+                        ...dailyBarStyle,
+                        background: darkText
+                          ? "rgba(26,32,48,0.15)"
+                          : "rgba(255,255,255,0.2)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          bottom: 0,
+                          left: `${left}%`,
+                          width: `${Math.max(right - left, 2)}%`,
+                          background: textColor,
+                          opacity: 0.85,
+                        }}
+                      />
+                    </div>
+                    <span style={dailyHiLoStyle}>
+                      {dhi} / {dlo}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
 
         <div style={{ ...btnRowStyle, borderColor }}>
           <button
@@ -720,7 +771,7 @@ function WeatherPanel({
             onClick={onMoveLeft}
             disabled={index === 0}
           >
-            ◂
+            Left
           </button>
           <button
             style={{
@@ -731,7 +782,7 @@ function WeatherPanel({
             onClick={onMoveRight}
             disabled={index === total - 1}
           >
-            ▸
+            Right
           </button>
           <button
             style={{
@@ -782,13 +833,71 @@ function AddSlot({ onOpen }: { onOpen: () => void }) {
 
 export default function HomeAtmosphere() {
   const { unit } = useTheme();
+  const API_URL = import.meta.env.VITE_WEATHER_API_BASE_URL || "";
   const [locations, setLocations] =
-    useState<AtmoLocation[]>(getInitialLocations);
+    useState<StoredLocation[]>(getInitialLocations);
   const [showPicker, setShowPicker] = useState(false);
+  const [weatherById, setWeatherById] = useState<Record<string, LiveWeather>>(
+    {},
+  );
+  const [loadingById, setLoadingById] = useState<Record<string, boolean>>({});
+  const [errorById, setErrorById] = useState<Record<string, string>>({});
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(locations));
   }, [locations]);
+
+  useEffect(() => {
+    let canceled = false;
+
+    const run = async () => {
+      type FetchResult =
+        | { id: string; ok: true; live: LiveWeather }
+        | { id: string; ok: false; error: string };
+
+      const nextLoading: Record<string, boolean> = {};
+      locations.forEach((loc) => {
+        nextLoading[loc.id] = true;
+      });
+      setLoadingById(nextLoading);
+
+      const jobs = locations.map(async (loc) => {
+        try {
+          const live = await fetchLiveWeather(API_URL, loc);
+          return { id: loc.id, ok: true, live } as FetchResult;
+        } catch (err) {
+          return {
+            id: loc.id,
+            ok: false,
+            error: err instanceof Error ? err.message : "Failed to load",
+          } as FetchResult;
+        }
+      });
+
+      const results = await Promise.all(jobs);
+      if (canceled) return;
+
+      const nextLive: Record<string, LiveWeather> = {};
+      const nextErr: Record<string, string> = {};
+      const nextLoad: Record<string, boolean> = {};
+
+      results.forEach((result) => {
+        nextLoad[result.id] = false;
+        if (result.ok) nextLive[result.id] = result.live;
+        else nextErr[result.id] = result.error;
+      });
+
+      setWeatherById((prev) => ({ ...prev, ...nextLive }));
+      setErrorById(nextErr);
+      setLoadingById(nextLoad);
+    };
+
+    if (locations.length) run();
+
+    return () => {
+      canceled = true;
+    };
+  }, [API_URL, locations]);
 
   const slots = useMemo(
     () => Array.from({ length: 3 }, (_, index) => locations[index] ?? null),
@@ -798,14 +907,36 @@ export default function HomeAtmosphere() {
   const handleSubmit = (data: LocationInput): boolean => {
     if (locations.length >= 3) return false;
 
-    const candidate = synthesizeLocation(data, locations.length + 1);
-    const updated = [...locations, candidate];
-    setLocations(updated);
+    const duplicate = locations.some(
+      (loc) =>
+        Math.abs(loc.lat - data.lat) < 0.0001 &&
+        Math.abs(loc.lon - data.lon) < 0.0001,
+    );
+    if (duplicate) return false;
+
+    const city = (
+      data.name || `${data.lat.toFixed(2)}, ${data.lon.toFixed(2)}`
+    ).slice(0, 60);
+
+    const candidate: StoredLocation = {
+      id: `loc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      city,
+      region: "Custom",
+      lat: data.lat,
+      lon: data.lon,
+    };
+
+    setLocations((current) => [...current, candidate]);
     return true;
   };
 
   const handleRemove = (id: string) => {
     setLocations((current) => current.filter((location) => location.id !== id));
+    setWeatherById((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
   };
 
   const handleMove = (from: number, to: number) => {
@@ -826,7 +957,10 @@ export default function HomeAtmosphere() {
             <WeatherPanel
               key={slot.id}
               location={slot}
+              live={weatherById[slot.id]}
               unit={unit}
+              loading={Boolean(loadingById[slot.id])}
+              error={errorById[slot.id]}
               index={index}
               total={locations.length}
               onRemove={() => handleRemove(slot.id)}
