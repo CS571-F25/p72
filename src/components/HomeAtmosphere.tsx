@@ -651,13 +651,13 @@ function WeatherPanel({
           <>
             <div style={bigTempStyle}>
               {temp}
-              <span style={degSymbolStyle}>deg {unit}</span>
+              <span style={degSymbolStyle}>°{unit}</span>
             </div>
             <div style={conditionStyle}>
               {live?.conditionLabel || "Unknown"}
             </div>
             <div style={{ ...hiLoStyle, color: mutedColor }}>
-              H {hi} deg L {lo} deg Feels {feels} deg
+              H {hi}° L {lo}° Feels {feels}°
             </div>
 
             <div style={spacerStyle} />
@@ -672,7 +672,7 @@ function WeatherPanel({
                     <ForecastIcon cond={hour.cond} />
                   </div>
                   <div style={hourTempStyle}>
-                    {unit === "F" ? cToF(hour.tempC) : hour.tempC} deg
+                    {unit === "F" ? cToF(hour.tempC) : hour.tempC}°
                   </div>
                 </div>
               ))}
